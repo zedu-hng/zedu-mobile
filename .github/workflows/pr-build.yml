@@ -126,6 +126,7 @@ jobs:
         run: pod install
 
       # Release config bundles the JS so the .app runs without Metro; simulator builds need no signing.
+      # arm64 only: AgoraReplayKitExtension (ScreenSharing target) has no usable x86_64 simulator slice.
       - name: Build for simulator
         run: |
           xcodebuild \
@@ -136,6 +137,7 @@ jobs:
             -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath ios/build \
             CODE_SIGNING_ALLOWED=NO \
+            ARCHS=arm64 \
             build
 
       - name: Zip .app
