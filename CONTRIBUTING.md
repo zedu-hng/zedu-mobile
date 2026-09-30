@@ -4,12 +4,14 @@ Zedu Mobile is the React Native app for iOS and Android. This guide covers how w
 
 The short version:
 
-> Approved ticket → work in your team's fork, against your team's backend → CI green in your fork (Tier 1) → PR to `zedu-hng/zedu-mobile:dev` → review + review build (Tier 2) → squash merge → reviewers promote to Zedu.
+> Approved ticket → ticket branch in your team's fork → test against your team's backend → **one PR** to `zedu-hng/zedu-mobile:dev` → your fork builds it → team lead approves → Zedu reviewers review with that build → squash merge → your team syncs.
 
 ## 1. Ground rules
 
 - **Every change needs an approved ticket** in ClickUp or Linear. Nothing starts from an untracked chat request.
-- **One ticket per PR.** If you find another problem, open another ticket rather than widening this PR.
+- **One ticket per PR, one person per PR.** Each member opens their own PR from their own ticket branch. No team branches and no combined PRs: we review and reject per developer, so nobody's work is held up by someone else's. If you find another problem, open another ticket.
+- **Your team lead reviews first.** They approve on your PR; Zedu reviewers pick it up after that.
+- **Don't change protected files** (§6) unless a reviewer has agreed it first.
 - **You never push to `zedu-hng` or `zeduchat` directly.** All work happens in your fork and comes in as a PR.
 - **AI is a tool, not an authority.** You own everything you submit. If you can't explain it, don't submit it.
 
@@ -31,7 +33,7 @@ Fork from **`zedu-hng/zedu-mobile`**, not from `zeduchat`. Otherwise your PRs an
 ## 3. One-time setup (per team)
 
 1. Fork `zedu-hng/zedu-mobile` into your team's GitHub org.
-2. In the fork, go to **Actions** and enable workflows. Forks have them off by default, and Tier 1 CI runs there.
+2. In the fork, go to **Actions** and enable workflows. Forks have them off by default, and your PR builds run there.
 3. Point CI at your team's backend: in the fork, go to **Settings → Secrets and variables → Actions → Variables**, and add `APP_ENV_FILE` containing your full `.env` (the keys are listed in `env.d.ts`). CI writes it to `.env` before building. Without it, builds succeed but the app has no backend.
 4. Each contributor clones the **team fork**:
 
@@ -59,6 +61,11 @@ Fork from **`zedu-hng/zedu-mobile`**, not from `zeduchat`. Otherwise your PRs an
    Types: `feat`, `fix`, `test`, `docs`, `refactor`, `chore`, `perf`, `security`. Example: `fix/245-android-crash-on-resume`.
 
 4. Commit with [Conventional Commits](https://www.conventionalcommits.org/): `feat: add offline quiz caching`, `fix: handle expired auth token`. Commitlint rejects `update`, `changes`, `final`, and friends. The PR title must pass commitlint too, and it becomes the squashed commit message.
+5. Commit only as yourself. The **Single author** check fails a PR with commits from more than one person. If you commit from several emails (work laptop, personal), add all of them to your GitHub account (**Settings → Emails**), or they count as different authors. Credit a collaborator with a `Co-authored-by:` trailer instead.
+
+**Dependent tickets:** if ticket B needs ticket A, open B's PR after A merges, then update B from `dev`. Don't stack B on top of A's unmerged branch.
+
+**Testing combinations:** you can merge ticket branches into a private branch in your fork to test them together. Never open a PR from that branch.
 
 ## 5. Testing
 
@@ -84,37 +91,55 @@ For UI changes, check layout, accessibility labels and interaction states (loadi
 
 **File policy:** PRs may not add `.env` or `.env.*` files, keystores, `.pem` files, credential or service-account JSON, or files over 1 MB. Stage files deliberately.
 
-## 6. CI: two tiers
+## 6. Protected files
 
-**Tier 1: your fork, on every push.** Pushing to any branch in your fork runs the full set: checks, security scans, and the Android APK and iOS simulator builds. It uses your fork's own Actions minutes, which are free and unlimited on public repos, macOS runners included. **Don't open a PR until Tier 1 is green.** Link the passing run in your PR.
+These files are owned by the reviewers. The **Protected files** check fails any PR that changes them, unless a reviewer has agreed the change first and added the `config-change-approved` label:
 
-**Tier 2: `zedu-hng`, after review.** On your PR, checks run on every push, but review builds don't. When a reviewer is ready to try your change, they add the **`ready-for-build`** label. That builds the APK and iOS simulator app once and posts download links on the PR. To rebuild after new pushes, a reviewer removes and re-adds the label.
+- `.github/` (workflows, templates, the review bot config);
+- `AGENTS.md` and `CONTRIBUTING.md`;
+- tooling config: `.eslintrc*`, `.prettierrc*`, `.prettierignore`, `tsconfig.json`, `babel.config.js`, `metro.config.js`, `jest.config.js`, `jest.setup.js`, `commitlint.config*`, `.gitleaks.toml`, `.husky/`, `.npmrc`;
+- Firebase config: `android/app/google-services.json`, `ios/GoogleService-Info.plist`.
 
-On a first-time contribution, a maintainer has to approve the workflow run before anything runs.
+Dependency changes (`package.json`, lockfiles) are fine when the ticket needs them. **Moving or restructuring files needs its own approved ticket**; never mix it into feature work.
 
-## 7. Open the PR
+## 7. How your PR gets built
+
+Your fork builds your PR, with your fork's `APP_ENV_FILE`, so the build talks to your team's backend. Zedu never holds your config or secrets.
+
+- **Builds run only while your PR is open.** Pushes to a ticket branch without an open PR skip the build. Docs-only pushes never build.
+- **First build:** opening the PR doesn't trigger one. In your fork, go to **Actions → PR build → Run workflow** on your branch, or push a commit. After that, every push builds automatically.
+- On your PR, the **Fork build** check finds that build for your latest commit, waits for it, and posts download links (Android APK, iOS simulator app). Reviewers test with those.
+- No build showing? Check that Actions is enabled in your fork and that it's synced, then comment `/fork-build` on the PR to re-check.
+
+The other checks (lint, types, tests, security scans, **Branch name**, **Single author**, **Protected files**) run on the PR itself. On a first-time contribution, a maintainer has to approve the workflow run before anything runs.
+
+## 8. Open the PR
 
 1. Open a PR from your fork's ticket branch into **`zedu-hng/zedu-mobile:dev`**. Open it from the ticket branch, not your fork's `dev`: that would drag in everything else merged there.
 2. Fill in the PR template completely:
    - the ticket link;
    - what changed and why;
    - how to test and what to expect;
-   - your Tier 1 run link;
+   - your team lead's GitHub handle;
    - screenshots or a recording for visible changes, on the platforms you changed;
    - the AI-usage line.
-3. Move the ticket to **IN REVIEW**.
+3. Ask your team lead to review it and leave an **Approve** review.
+4. Run the first build (§7).
+5. Move the ticket to **IN REVIEW**.
 
-## 8. Review and merge
+## 9. Review and merge
 
-- **1 reviewer approval** is required, and it must come after your last push.
+- **Your team lead approves first.** Zedu reviewers only pick up PRs the lead has approved.
+- **1 Zedu reviewer approval** is required, and it must come after your last push.
+- All checks must pass, including **Fork build**.
 - All review threads must be resolved. Don't resolve a thread without actually addressing it.
-- To address feedback, push to the same ticket branch. Checks re-run.
+- To address feedback, push to the same ticket branch. Checks and the fork build re-run.
 - Reviewers **squash-merge** into `dev`. Your PR title becomes the commit message, so keep it conventional.
 - Contributors don't merge their own PRs.
 
-After merge, reviewers promote `dev` → `central-staging` with a merge commit, and send `central-staging` to `zeduchat` in batches. The ticket goes **MERGED → VERIFIED → CLOSED** once the change is verified.
+After merge, reviewers promote `dev` → `central-staging` with a merge commit, and send `central-staging` to `zeduchat` in batches. Sync your fork's `dev` (**Sync fork**) to pull in what's merged. The ticket goes **MERGED → VERIFIED → CLOSED** once the change is verified.
 
-## 9. Security and secrets
+## 10. Security and secrets
 
 Never commit:
 
@@ -130,7 +155,7 @@ Anything in `.env` or compiled into the app is readable by anyone who has the ap
 
 If you expose a secret, deleting it in the next commit is not enough. Tell a reviewer immediately so it can be rotated.
 
-## 10. AI usage
+## 11. AI usage
 
 AI is fine for explaining code, drafting implementations, tests, debugging, refactoring and docs.
 
@@ -145,16 +170,16 @@ For significant AI-assisted changes, add one line to the PR saying how AI was us
 
 If you use an AI coding agent, point it at `AGENTS.md`. It holds the repo conventions agents need, and most agents load it automatically.
 
-## 11. Definition of done
+## 12. Definition of done
 
 - Acceptance criteria met.
-- Tier 1 green in your fork, and checks green on the PR.
-- Approved, with all threads resolved.
+- All checks green on the PR, including **Fork build**.
+- Approved by your team lead and a Zedu reviewer, with all threads resolved.
 - Merged into `zedu-hng:dev`.
 - Verified on the build.
 - Ticket closed in ClickUp or Linear.
 
-## 12. Getting unstuck
+## 13. Getting unstuck
 
 Ask in your team's channel first, then the project channel. For a blocker, include:
 

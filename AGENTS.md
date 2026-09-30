@@ -8,6 +8,8 @@ Instructions for AI coding agents working in `zedu-mobile` (React Native 0.83, T
 
 - Work only on a ticket branch in the contributor's fork. Never push to `dev`, `central-staging` or `main`, and never target `zeduchat` directly. PRs go into `zedu-hng/zedu-mobile:dev`.
 - Keep the change to what the ticket asks. No drive-by refactors, renames or dependency bumps.
+- Don't edit protected files (`.github/`, `AGENTS.md`, `CONTRIBUTING.md`, tooling config; full list in `CONTRIBUTING.md` §6). The **Protected files** check fails the PR unless a reviewer approved the change first.
+- One author per PR: commit only as the contributor, never mix in other people's commits.
 - Never commit `.env` or any `.env.*` file, keystores, `.pem` files, credential or service-account JSON, or files over 1 MB. The CI file policy rejects them.
 - Don't replace or add `android/app/google-services.json` or `ios/GoogleService-Info.plist` unless the ticket says so.
 - Never hardcode URLs or keys. Read config from `@env` (`BASE_URL`, `CLIENT_URL`, `CONNECT_URL`, …). If you add a key, declare it in `env.d.ts`.
