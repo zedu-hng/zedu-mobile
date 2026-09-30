@@ -12,8 +12,8 @@ on:
       - ready_for_review
   push:
     branches:
-      - main
-      - staging
+      # Tier 1: every push in a contributor fork runs the checks.
+      - "**"
 
 concurrency:
   group: pr-pre-commit-${{ github.ref }}
