@@ -110,7 +110,8 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
-            signingConfig signingConfigs.release
+            // zedu.keystore is gitignored; fork/PR CI builds fall back to debug signing (review-only, not store-uploadable).
+            signingConfig file('zedu.keystore').exists() ? signingConfigs.release : signingConfigs.debug
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"

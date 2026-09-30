@@ -1,0 +1,147 @@
+name: PR build
+
+# Stage A: runs untrusted PR code (including fork PRs) with no secrets.
+# Produces review artifacts; pr-preview.yml (workflow_run) publishes them with secrets.
+
+on:
+  pull_request:
+    branches:
+      - main
+      - staging
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+  push:
+    branches:
+      - staging
+  workflow_dispatch:
+
+concurrency:
+  group: pr-build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  meta:
+    name: Build metadata
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record PR number and head SHA
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          mkdir -p meta
+          printf '%s' "$PR_NUMBER" > meta/pr_number
+          printf '%s' "$HEAD_SHA" > meta/head_sha
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: meta
+          path: meta/
+          retention-days: 7
+
+  android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Install dependencies
+        run: npm ci
+
+      # .env.* files are blocked by security-checks, so staging config lives in the STAGING_ENV repo variable.
+      - name: Write .env
+        env:
+          STAGING_ENV: ${{ vars.STAGING_ENV }}
+        run: |
+          if [ -z "$STAGING_ENV" ]; then
+            echo "::warning::STAGING_ENV variable not set; building with an empty .env (app will not reach a backend)."
+          fi
+          printf '%s\n' "$STAGING_ENV" > .env
+
+      - name: Assemble release APK
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,x86_64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  ios-simulator:
+    name: iOS simulator build
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Write .env
+        env:
+          STAGING_ENV: ${{ vars.STAGING_ENV }}
+        run: |
+          if [ -z "$STAGING_ENV" ]; then
+            echo "::warning::STAGING_ENV variable not set; building with an empty .env (app will not reach a backend)."
+          fi
+          printf '%s\n' "$STAGING_ENV" > .env
+
+      - name: Install pods
+        working-directory: ios
+        run: bundle exec pod install
+
+      # Release config bundles the JS so the .app runs without Metro; simulator builds need no signing.
+      - name: Build for simulator
+        run: |
+          xcodebuild \
+            -workspace ios/Zedu.xcworkspace \
+            -scheme Zedu \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath ios/build \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Zip .app
+        run: |
+          cd ios/build/Build/Products/Release-iphonesimulator
+          ditto -c -k --sequesterRsrc --keepParent Zedu.app "$GITHUB_WORKSPACE/Zedu-simulator.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator
+          path: Zedu-simulator.zip
+          if-no-files-found: error
+          retention-days: 14

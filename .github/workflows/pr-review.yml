@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+      - staging
     types:
       - opened
       - synchronize
@@ -12,6 +13,7 @@ on:
   push:
     branches:
       - main
+      - staging
 
 concurrency:
   group: pr-review-${{ github.ref }}
@@ -66,7 +68,8 @@ jobs:
 
       - name: Post PR comment
         uses: marocchino/sticky-pull-request-comment@v2
-        if: github.event_name == 'pull_request' && always()
+        # Fork PRs get a read-only GITHUB_TOKEN, so commenting would 403; the job still fails below on errors.
+        if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         with:
           header: pr-review-bot
           path: review-report.md
