@@ -1,7 +1,7 @@
 name: PR build
 
 # Stage A: runs untrusted PR code (including fork PRs) with no secrets.
-# Produces review artifacts; pr-preview.yml (workflow_run) publishes them with secrets.
+# Produces review artifacts; pr-preview.yml (workflow_run) posts download links on the PR.
 #
 # Tier 1: every push builds, on the pusher's own fork and Actions minutes.
 # Tier 2: on PRs into the review org, builds only when a reviewer adds the `ready-for-build` label

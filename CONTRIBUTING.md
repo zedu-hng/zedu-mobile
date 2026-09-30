@@ -88,7 +88,7 @@ For UI changes, check layout, accessibility labels and interaction states (loadi
 
 **Tier 1: your fork, on every push.** Pushing to any branch in your fork runs the full set: checks, security scans, and the Android APK and iOS simulator builds. It uses your fork's own Actions minutes, which are free and unlimited on public repos, macOS runners included. **Don't open a PR until Tier 1 is green.** Link the passing run in your PR.
 
-**Tier 2: `zedu-hng`, after review.** On your PR, checks run on every push, but review builds don't. When a reviewer is ready to try your change, they add the **`ready-for-build`** label. That builds the APK and iOS simulator app once and posts the download and preview links on the PR. To rebuild after new pushes, a reviewer removes and re-adds the label.
+**Tier 2: `zedu-hng`, after review.** On your PR, checks run on every push, but review builds don't. When a reviewer is ready to try your change, they add the **`ready-for-build`** label. That builds the APK and iOS simulator app once and posts download links on the PR. To rebuild after new pushes, a reviewer removes and re-adds the label.
 
 On a first-time contribution, a maintainer has to approve the workflow run before anything runs.
 

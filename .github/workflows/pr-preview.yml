@@ -1,14 +1,8 @@
 name: PR preview
 
-# Stage B: trusted context with secrets. Runs this file from the default branch, never checks out
-# PR code, and only consumes artifacts produced by "PR build".
-#
-# Config (all optional; each publish step is skipped when its secret is missing):
-#   secrets.FIREBASE_SERVICE_ACCOUNT   JSON key with the Firebase App Distribution Admin role
-#   vars.FIREBASE_ANDROID_APP_ID       e.g. 1:1234567890:android:abc123
-#   vars.FIREBASE_TESTER_GROUPS        comma-separated group aliases for PR builds (default: reviewers)
-#   vars.FIREBASE_STAGING_GROUPS       comma-separated group aliases for staging pushes (default: staging)
-#   secrets.APPETIZE_API_TOKEN         Appetize API token
+# Stage B: trusted context. Runs this file from the default branch, never checks out PR code,
+# and only reads artifacts produced by "PR build". Posts download links on the PR. No secrets,
+# no distribution services: builds are for reviewers to install and test.
 
 on:
   workflow_run:
@@ -21,11 +15,31 @@ permissions:
   contents: read
 
 jobs:
-  publish:
-    name: Publish review builds
-    if: github.event.workflow_run.conclusion == 'success'
+  # A labeled event with any label other than ready-for-build skips every build job, leaving no artifacts.
+  check:
+    name: Check for build artifacts
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    permissions:
+      actions: read
+    outputs:
+      built: ${{ steps.count.outputs.built }}
+    steps:
+      - id: count
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          count=$(gh api "repos/$REPO/actions/runs/$RUN_ID/artifacts" --jq .total_count)
+          echo "built=$([ "$count" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+  comment:
+    name: Post review build links
+    needs: check
+    if: needs.check.outputs.built == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       actions: read
       pull-requests: write
@@ -33,121 +47,46 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       REPO: ${{ github.repository }}
-      RUN_ID: ${{ github.event.workflow_run.id }}
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
-      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-      FIREBASE_ANDROID_APP_ID: ${{ vars.FIREBASE_ANDROID_APP_ID }}
-      APPETIZE_API_TOKEN: ${{ secrets.APPETIZE_API_TOKEN }}
     steps:
-      # Classify from the trusted workflow_run payload only. Only PR builds and pushes to this repo's
-      # staging are published; fork feature-branch pushes (Tier 1) and label-skipped runs publish nothing.
-      - name: Classify run
-        id: pr
-        env:
-          WR_EVENT: ${{ github.event.workflow_run.event }}
-          WR_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
-          WR_BRANCH: ${{ github.event.workflow_run.head_branch }}
-        run: |
-          count=$(gh api "repos/$REPO/actions/runs/$RUN_ID/artifacts" --jq .total_count)
-          if [ "$count" -eq 0 ]; then echo "No artifacts (jobs skipped); nothing to publish"; echo "kind=none" >> "$GITHUB_OUTPUT"; exit 0; fi
-          case "$WR_EVENT" in
-            pull_request) echo "kind=pull_request" >> "$GITHUB_OUTPUT" ;;
-            push)
-              if [ "$WR_REPO" = "$REPO" ] && [ "$WR_BRANCH" = "staging" ]; then
-                echo "kind=push" >> "$GITHUB_OUTPUT"
-              else
-                echo "Push to $WR_REPO@$WR_BRANCH is not published"; echo "kind=none" >> "$GITHUB_OUTPUT"
-              fi ;;
-            *) echo "Event '$WR_EVENT' is not published"; echo "kind=none" >> "$GITHUB_OUTPUT" ;;
-          esac
-
       - uses: actions/download-artifact@v4
-        if: steps.pr.outputs.kind != 'none'
         with:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ github.token }}
-          path: artifacts
+          name: meta
+          path: meta
 
       # meta/pr_number was written by untrusted code: validate its format, then confirm the PR's head matches this run.
       - name: Resolve PR
-        id: prnum
-        if: steps.pr.outputs.kind == 'pull_request'
+        id: pr
         run: |
-          number=$(cat artifacts/meta/pr_number)
+          number=$(cat meta/pr_number)
           [[ "$number" =~ ^[0-9]+$ ]] || { echo "Invalid PR number"; exit 1; }
           pr_head=$(gh api "repos/$REPO/pulls/$number" --jq .head.sha)
           [ "$pr_head" = "$HEAD_SHA" ] || { echo "PR #$number head $pr_head != run head $HEAD_SHA (stale run?)"; exit 1; }
           echo "number=$number" >> "$GITHUB_OUTPUT"
 
-      - name: Firebase App Distribution
-        id: firebase
-        if: env.FIREBASE_SERVICE_ACCOUNT != '' && env.FIREBASE_ANDROID_APP_ID != '' && (steps.pr.outputs.kind == 'pull_request' || steps.pr.outputs.kind == 'push')
-        env:
-          PR_NUMBER: ${{ steps.prnum.outputs.number }}
-          KIND: ${{ steps.pr.outputs.kind }}
-          PR_GROUPS: ${{ vars.FIREBASE_TESTER_GROUPS || 'reviewers' }}
-          STAGING_GROUPS: ${{ vars.FIREBASE_STAGING_GROUPS || 'staging' }}
-        run: |
-          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
-          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
-          if [ "$KIND" = "pull_request" ]; then
-            groups="$PR_GROUPS"; notes="PR #$PR_NUMBER @ ${HEAD_SHA:0:7}"
-          else
-            groups="$STAGING_GROUPS"; notes="staging @ ${HEAD_SHA:0:7}"
-          fi
-          npx --yes firebase-tools@15.32.0 appdistribution:distribute artifacts/android-apk/app-release.apk \
-            --app "$FIREBASE_ANDROID_APP_ID" \
-            --groups "$groups" \
-            --release-notes "$notes"
-          echo "groups=$groups" >> "$GITHUB_OUTPUT"
-          rm -f "$RUNNER_TEMP/sa.json"
-
-      - name: Appetize
-        id: appetize
-        if: env.APPETIZE_API_TOKEN != '' && steps.pr.outputs.kind == 'pull_request'
-        env:
-          PR_NUMBER: ${{ steps.prnum.outputs.number }}
-        run: |
-          upload() {
-            curl -sSf -X POST https://api.appetize.io/v1/apps \
-              -H "X-API-KEY: $APPETIZE_API_TOKEN" \
-              -F "file=@$1" -F "platform=$2" -F "note=PR #$PR_NUMBER @ ${HEAD_SHA:0:7}" \
-              | jq -r .publicKey
-          }
-          android_key=$(upload artifacts/android-apk/app-release.apk android)
-          ios_key=$(upload artifacts/ios-simulator/Zedu-simulator.zip ios)
-          echo "android=https://appetize.io/app/$android_key" >> "$GITHUB_OUTPUT"
-          echo "ios=https://appetize.io/app/$ios_key" >> "$GITHUB_OUTPUT"
-
       - name: Compose comment
-        if: steps.pr.outputs.kind == 'pull_request'
         env:
           RUN_URL: ${{ github.event.workflow_run.html_url }}
-          FB_GROUPS: ${{ steps.firebase.outputs.groups }}
-          APPETIZE_ANDROID: ${{ steps.appetize.outputs.android }}
-          APPETIZE_IOS: ${{ steps.appetize.outputs.ios }}
         run: |
           {
             echo "### Review builds for \`${HEAD_SHA:0:7}\`"
             echo
-            echo "- **Artifacts** (APK + iOS simulator .app): [build run]($RUN_URL)"
-            if [ -n "$FB_GROUPS" ]; then
-              echo "- **Android install**: sent via Firebase App Distribution to \`$FB_GROUPS\` (check your tester email / App Tester app)"
-            fi
-            if [ -n "$APPETIZE_ANDROID" ]; then
-              echo "- **Try in browser**: [Android]($APPETIZE_ANDROID) · [iOS]($APPETIZE_IOS)"
-            fi
+            echo "Download from the [build run]($RUN_URL) (Artifacts section):"
+            echo
+            echo "- **Android** (\`android-apk\`): unzip and install \`app-release.apk\` (allow installs from unknown sources)."
+            echo "- **iOS simulator** (\`ios-simulator\`, Apple Silicon Mac): unzip twice, then drag \`Zedu.app\` onto a booted simulator, or run \`xcrun simctl install booted Zedu.app\`."
           } > comment.md
 
       - uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
-        if: steps.pr.outputs.kind == 'pull_request'
         with:
           header: review-builds
-          number: ${{ steps.prnum.outputs.number }}
+          number: ${{ steps.pr.outputs.number }}
           path: comment.md
 
       - name: Commit status
-        if: always() && (steps.pr.outputs.kind == 'pull_request' || steps.pr.outputs.kind == 'push')
+        if: always()
         env:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           JOB_STATUS: ${{ job.status }}
@@ -155,4 +94,4 @@ jobs:
           state=$([ "$JOB_STATUS" = "success" ] && echo success || echo failure)
           gh api "repos/$REPO/statuses/$HEAD_SHA" \
             -f state="$state" -f context="PR preview / publish" \
-            -f target_url="$RUN_URL" -f description="Review build publishing: $JOB_STATUS"
+            -f target_url="$RUN_URL" -f description="Review build links: $JOB_STATUS"
