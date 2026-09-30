@@ -48,3 +48,6 @@ jobs:
 
       - name: TypeScript (check-types)
         run: npm run check-types
+
+      - name: Jest
+        run: npx jest --ci
