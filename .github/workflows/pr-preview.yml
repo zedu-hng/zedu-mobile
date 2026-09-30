@@ -84,7 +84,7 @@ jobs:
           else
             groups="$STAGING_GROUPS"; notes="staging @ ${HEAD_SHA:0:7}"
           fi
-          npx --yes firebase-tools@latest appdistribution:distribute artifacts/android-apk/app-release.apk \
+          npx --yes firebase-tools@15.32.0 appdistribution:distribute artifacts/android-apk/app-release.apk \
             --app "$FIREBASE_ANDROID_APP_ID" \
             --groups "$groups" \
             --release-notes "$notes"
@@ -128,7 +128,7 @@ jobs:
             fi
           } > comment.md
 
-      - uses: marocchino/sticky-pull-request-comment@v2
+      - uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
         if: steps.pr.outputs.kind == 'pull_request'
         with:
           header: review-builds
