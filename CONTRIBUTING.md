@@ -24,7 +24,7 @@ zeduchat/zedu-mobile            Zedu's repo. Reviewers send batches here; you ne
 | Branch in `zedu-hng` | Purpose | Who merges |
 |---|---|---|
 | `dev` (default) | All PRs land here, from teams and reviewers alike. | Reviewers, squash merge |
-| `staging` | What's ready to go to Zedu; mirrors `zeduchat:staging`. | Reviewers promote `dev` → `staging` |
+| `central-staging` | What's ready to go to Zedu; mirrors `zeduchat:central-staging`. | Reviewers promote `dev` → `central-staging` |
 
 Fork from **`zedu-hng/zedu-mobile`**, not from `zeduchat`. Otherwise your PRs and **Sync fork** point at the wrong repo.
 
@@ -112,7 +112,7 @@ On a first-time contribution, a maintainer has to approve the workflow run befor
 - Reviewers **squash-merge** into `dev`. Your PR title becomes the commit message, so keep it conventional.
 - Contributors don't merge their own PRs.
 
-After merge, reviewers promote `dev` → `staging` with a merge commit, and send `staging` to `zeduchat` in batches. The ticket goes **MERGED → VERIFIED → CLOSED** once the change is verified.
+After merge, reviewers promote `dev` → `central-staging` with a merge commit, and send `central-staging` to `zeduchat` in batches. The ticket goes **MERGED → VERIFIED → CLOSED** once the change is verified.
 
 ## 9. Security and secrets
 
