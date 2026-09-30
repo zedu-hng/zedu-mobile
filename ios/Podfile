@@ -42,16 +42,20 @@ target 'Zedu' do
 
         native_target.build_configurations.each do |build_config|
           build_config.build_settings['APPLICATION_EXTENSION_API_ONLY'] = 'YES'
-          build_config.build_settings['FRAMEWORK_SEARCH_PATHS'] = [
-            '$(inherited)',
-            '"${SRCROOT}/Pods/AgoraVideo_Special_iOS/AgoraReplayKitExtension.xcframework/ios-arm64"',
-            '"${SRCROOT}/Pods/AgoraVideo_Special_iOS/AgoraReplayKitExtension.xcframework/ios-arm64_x86_64-simulator"',
-          ]
-          build_config.build_settings['HEADER_SEARCH_PATHS'] = [
-            '$(inherited)',
-            '"${SRCROOT}/Pods/AgoraVideo_Special_iOS/AgoraReplayKitExtension.xcframework/ios-arm64/AgoraReplayKitExtension.framework/Headers"',
-            '"${SRCROOT}/Pods/AgoraVideo_Special_iOS/AgoraReplayKitExtension.xcframework/ios-arm64_x86_64-simulator/AgoraReplayKitExtension.framework/Headers"',
-          ]
+          # Point each SDK at its own xcframework slice; listing both made simulator builds link the device slice.
+          replaykit = '${SRCROOT}/Pods/AgoraVideo_Special_iOS/AgoraReplayKitExtension.xcframework'
+          { 'iphoneos*' => 'ios-arm64', 'iphonesimulator*' => 'ios-arm64_x86_64-simulator' }.each do |sdk, slice|
+            build_config.build_settings["FRAMEWORK_SEARCH_PATHS[sdk=#{sdk}]"] = [
+              '$(inherited)',
+              "\"#{replaykit}/#{slice}\"",
+            ]
+            build_config.build_settings["HEADER_SEARCH_PATHS[sdk=#{sdk}]"] = [
+              '$(inherited)',
+              "\"#{replaykit}/#{slice}/AgoraReplayKitExtension.framework/Headers\"",
+            ]
+          end
+          build_config.build_settings.delete('FRAMEWORK_SEARCH_PATHS')
+          build_config.build_settings.delete('HEADER_SEARCH_PATHS')
           build_config.build_settings['OTHER_LDFLAGS'] = [
             '$(inherited)',
             '-framework AgoraReplayKitExtension',

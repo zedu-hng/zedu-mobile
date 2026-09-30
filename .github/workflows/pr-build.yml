@@ -1,0 +1,158 @@
+name: PR build
+
+# Stage A: runs untrusted PR code (including fork PRs) with no secrets.
+# Produces review artifacts; pr-preview.yml (workflow_run) posts download links on the PR.
+#
+# Tier 1: every push builds, on the pusher's own fork and Actions minutes.
+# Tier 2: on PRs into the review org, builds only when a reviewer adds the `ready-for-build` label
+#         (remove and re-add it to rebuild after new pushes), so review iterations don't rebuild.
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - main
+      - staging
+      - dev
+    types:
+      - labeled
+  workflow_dispatch:
+
+concurrency:
+  group: pr-build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  meta:
+    name: Build metadata
+    if: github.event_name != 'pull_request' || github.event.label.name == 'ready-for-build'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record PR number and head SHA
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          mkdir -p meta
+          printf '%s' "$PR_NUMBER" > meta/pr_number
+          printf '%s' "$HEAD_SHA" > meta/head_sha
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: meta
+          path: meta/
+          retention-days: 7
+
+  android:
+    name: Android APK
+    if: github.event_name != 'pull_request' || github.event.label.name == 'ready-for-build'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Install dependencies
+        run: npm ci
+
+      # .env.* files are blocked by security-checks, so backend config lives in the APP_ENV_FILE repo variable (each fork sets its own).
+      - name: Write .env
+        env:
+          APP_ENV_FILE: ${{ vars.APP_ENV_FILE }}
+        run: |
+          if [ -z "$APP_ENV_FILE" ]; then
+            echo "::warning::APP_ENV_FILE variable not set; building with an empty .env (app will not reach a backend)."
+          fi
+          printf '%s\n' "$APP_ENV_FILE" > .env
+
+      - name: Assemble release APK
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,x86_64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  ios-simulator:
+    name: iOS simulator build
+    if: github.event_name != 'pull_request' || github.event.label.name == 'ready-for-build'
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      # Gemfile.lock targets Ruby 2.7 / Bundler 2.1 (unavailable on macos-15), so skip Bundler and
+      # install the exact CocoaPods version recorded in Podfile.lock instead.
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
+      - name: Install CocoaPods
+        run: gem install cocoapods -v "$(awk '/^COCOAPODS:/{print $2}' ios/Podfile.lock)" --no-document
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Write .env
+        env:
+          APP_ENV_FILE: ${{ vars.APP_ENV_FILE }}
+        run: |
+          if [ -z "$APP_ENV_FILE" ]; then
+            echo "::warning::APP_ENV_FILE variable not set; building with an empty .env (app will not reach a backend)."
+          fi
+          printf '%s\n' "$APP_ENV_FILE" > .env
+
+      - name: Install pods
+        working-directory: ios
+        run: pod install
+
+      # Release config bundles the JS so the .app runs without Metro; simulator builds need no signing.
+      # arm64 only: AgoraReplayKitExtension (ScreenSharing target) has no usable x86_64 simulator slice.
+      - name: Build for simulator
+        run: |
+          xcodebuild \
+            -workspace ios/Zedu.xcworkspace \
+            -scheme Zedu \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath ios/build \
+            CODE_SIGNING_ALLOWED=NO \
+            ARCHS=arm64 \
+            build
+
+      - name: Zip .app
+        run: |
+          cd ios/build/Build/Products/Release-iphonesimulator
+          ditto -c -k --sequesterRsrc --keepParent Zedu.app "$GITHUB_WORKSPACE/Zedu-simulator.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator
+          path: Zedu-simulator.zip
+          if-no-files-found: error
+          retention-days: 14

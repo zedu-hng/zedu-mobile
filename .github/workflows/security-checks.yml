@@ -4,6 +4,8 @@ on:
   pull_request:
     branches:
       - main
+      - staging
+      - dev
     types:
       - opened
       - synchronize
@@ -11,7 +13,8 @@ on:
       - ready_for_review
   push:
     branches:
-      - main
+      # Tier 1: every push in a contributor fork runs the checks.
+      - "**"
 
 concurrency:
   group: security-${{ github.workflow }}-${{ github.ref }}
