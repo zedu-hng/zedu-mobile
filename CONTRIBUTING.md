@@ -109,7 +109,7 @@ Your fork builds your PR, with your fork's `APP_ENV_FILE`, so the build talks to
 - **Builds run only while your PR is open.** Pushes to a ticket branch without an open PR skip the build. Docs-only pushes never build.
 - **First build:** opening the PR doesn't trigger one. In your fork, go to **Actions → PR build → Run workflow** on your branch, or push a commit. After that, every push builds automatically.
 - On your PR, the **Fork build** check finds that build for your latest commit, waits for it, and posts download links (Android APK, iOS simulator app). Reviewers test with those.
-- No build showing? Check that Actions is enabled in your fork and that it's synced, then comment `/fork-build` on the PR to re-check.
+- After a manual build, **Fork build** updates on its own within 15 minutes; comment `/fork-build` on the PR to check straight away. No build showing at all? Check that Actions is enabled in your fork and that it's synced.
 
 The other checks (lint, types, tests, security scans, **Branch name**, **Single author**, **Protected files**) run on the PR itself. On a first-time contribution, a maintainer has to approve the workflow run before anything runs.
 

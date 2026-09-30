@@ -131,9 +131,22 @@ jobs:
           fi
           printf '%s\n' "$APP_ENV_FILE" > .env
 
+      # Reuse pod downloads (Agora's SDK zips are large) and survive short network/DNS blips.
+      - uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/CocoaPods
+          key: cocoapods-${{ runner.os }}-${{ hashFiles('ios/Podfile.lock') }}
+          restore-keys: cocoapods-${{ runner.os }}-
+
       - name: Install pods
         working-directory: ios
-        run: pod install
+        run: |
+          for attempt in 1 2 3; do
+            pod install && exit 0
+            echo "::warning::pod install failed (attempt $attempt/3); retrying in 30s."
+            sleep 30
+          done
+          exit 1
 
       # Release config bundles the JS so the .app runs without Metro; simulator builds need no signing.
       # arm64 only: AgoraReplayKitExtension (ScreenSharing target) has no usable x86_64 simulator slice.
