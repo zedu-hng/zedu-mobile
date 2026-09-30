@@ -100,10 +100,14 @@ jobs:
           node-version: "20"
           cache: npm
 
+      # Gemfile.lock targets Ruby 2.7 / Bundler 2.1 (unavailable on macos-15), so skip Bundler and
+      # install the exact CocoaPods version recorded in Podfile.lock instead.
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.3"
-          bundler-cache: true
+
+      - name: Install CocoaPods
+        run: gem install cocoapods -v "$(awk '/^COCOAPODS:/{print $2}' ios/Podfile.lock)" --no-document
 
       - name: Install dependencies
         run: npm ci
@@ -119,7 +123,7 @@ jobs:
 
       - name: Install pods
         working-directory: ios
-        run: bundle exec pod install
+        run: pod install
 
       # Release config bundles the JS so the .app runs without Metro; simulator builds need no signing.
       - name: Build for simulator
