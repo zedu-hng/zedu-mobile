@@ -143,6 +143,8 @@ Don't:
 
 For significant AI-assisted changes, add one line to the PR saying how AI was used.
 
+If you use an AI coding agent, point it at `AGENTS.md`. It holds the repo conventions agents need, and most agents load it automatically.
+
 ## 11. Definition of done
 
 - Acceptance criteria met.
