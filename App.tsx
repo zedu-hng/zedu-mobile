@@ -1,3 +1,4 @@
+// Review-flow end-to-end test. This PR is closed without merging.
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import BootSplash from 'react-native-bootsplash';
 import { useEffect, useRef, useState } from 'react';
