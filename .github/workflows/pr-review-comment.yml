@@ -42,6 +42,11 @@ jobs:
             number=$(gh api -X GET "repos/$REPO/pulls" -f state=open -f head="${HEAD_REPO%%/*}:$HEAD_BRANCH" \
               | jq -r --arg sha "$HEAD_SHA" '[.[] | select(.head.sha == $sha)][0].number // empty')
           fi
+          # A newer push may have a review in flight; never let this older report overwrite it.
+          if [ -n "$number" ] && [ "$(gh api "repos/$REPO/pulls/$number" --jq .head.sha)" != "$HEAD_SHA" ]; then
+            echo "::notice::PR #$number has moved past ${HEAD_SHA:0:7}; skipping the stale report."
+            number=""
+          fi
           [ -n "$number" ] || echo "::notice::No open PR for $HEAD_REPO:$HEAD_BRANCH; skipping comment."
           echo "number=$number" >> "$GITHUB_OUTPUT"
 
