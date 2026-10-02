@@ -120,12 +120,19 @@ jobs:
     if: needs.scope.outputs.internal == 'false'
     runs-on: ubuntu-latest
     env:
-      # Dependabot only bumps GitHub Actions versions (see .github/dependabot.yml), all under .github/.
-      APPROVED: ${{ contains(github.event.pull_request.labels.*.name, 'config-change-approved') || github.event.pull_request.user.login == 'dependabot[bot]' }}
+      APPROVED: ${{ contains(github.event.pull_request.labels.*.name, 'config-change-approved') }}
+      DEPENDABOT: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
     steps:
       - run: |
           protected='^(\.github/|AGENTS\.md$|CONTRIBUTING\.md$|\.eslintrc|\.prettierrc|\.prettierignore$|tsconfig\.json$|babel\.config\.js$|metro\.config\.js$|jest\.config\.js$|jest\.setup\.js$|commitlint\.config|\.gitleaks\.toml$|\.husky/|\.npmrc$|android/app/google-services\.json$|ios/GoogleService-Info\.plist$)'
-          hits=$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/files" --jq '.[].filename' | grep -E "$protected" || true)
+          files=$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/files" --jq '.[].filename')
+          hits=$(grep -E "$protected" <<< "$files" || true)
+          # Dependabot bumps GitHub Actions only (.github/dependabot.yml). Waive it only while every
+          # changed file is under .github/, so a wider Dependabot config can't ride this exemption.
+          if [ "$DEPENDABOT" = true ] && ! grep -qv '^\.github/' <<< "$files"; then
+            echo "::notice::Dependabot PR changing only .github/; protected-files check waived."
+            exit 0
+          fi
           if [ -z "$hits" ]; then
             echo "OK: no protected files changed"
           elif [ "$APPROVED" = true ]; then
