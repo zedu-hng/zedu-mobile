@@ -30,13 +30,18 @@ jobs:
       REPO: ${{ github.repository }}
       HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
       HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      RUN_PRS: ${{ toJSON(github.event.workflow_run.pull_requests) }}
     steps:
-      # A fork PR run's pull_requests array is empty, so find the PR by owner:branch.
+      # Same-repo runs list their PR; fork runs don't, so match the open PR by owner:branch and head SHA.
       - name: Resolve PR number
         id: pr
         run: |
-          number=$(gh api -X GET "repos/$REPO/pulls" -f state=open \
-            -f head="${HEAD_REPO%%/*}:$HEAD_BRANCH" --jq '.[0].number // empty')
+          number=$(jq -r '.[0].number // empty' <<< "$RUN_PRS")
+          if [ -z "$number" ]; then
+            number=$(gh api -X GET "repos/$REPO/pulls" -f state=open -f head="${HEAD_REPO%%/*}:$HEAD_BRANCH" \
+              | jq -r --arg sha "$HEAD_SHA" '[.[] | select(.head.sha == $sha)][0].number // empty')
+          fi
           [ -n "$number" ] || echo "::notice::No open PR for $HEAD_REPO:$HEAD_BRANCH; skipping comment."
           echo "number=$number" >> "$GITHUB_OUTPUT"
 

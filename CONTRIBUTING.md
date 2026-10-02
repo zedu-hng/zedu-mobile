@@ -45,8 +45,8 @@ Fork from **`zedu-hng/zedu-mobile`**, not from `zeduchat`. Otherwise your PRs an
    npm ci
    ```
 
-5. Create a local `.env` with your team's values, using the same keys as `env.d.ts`. Never commit it.
-6. Follow the [React Native environment setup](https://reactnative.dev/docs/set-up-your-environment), then run `npm run android` / `npm run ios` (see README).
+6. Create a local `.env` with your team's values, using the same keys as `env.d.ts`. Never commit it.
+7. Follow the [React Native environment setup](https://reactnative.dev/docs/set-up-your-environment), then run `npm run android` / `npm run ios` (see README).
 
 `npm ci` installs Husky git hooks. On commit, Prettier, ESLint, TypeScript and lint-staged run, and commitlint checks your message.
 

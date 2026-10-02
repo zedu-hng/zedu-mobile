@@ -41,9 +41,13 @@ jobs:
             [ -n "$run" ] || continue
             read -r run_id conclusion <<< "$run"
             case "$conclusion" in
-              failure|cancelled|timed_out)
-                echo "PR #$number: re-running review run $run_id"
+              # --failed reruns failed jobs only; a cancelled run has none, so rerun it whole.
+              failure|timed_out)
+                echo "PR #$number: re-running failed jobs of run $run_id"
                 gh run rerun "$run_id" --repo "$REPO" --failed || echo "::warning::PR #$number: rerun of $run_id failed" ;;
+              cancelled)
+                echo "PR #$number: re-running cancelled run $run_id"
+                gh run rerun "$run_id" --repo "$REPO" || echo "::warning::PR #$number: rerun of $run_id failed" ;;
               *) echo "PR #$number: review run $run_id is $conclusion; nothing to do" ;;
             esac
           done
