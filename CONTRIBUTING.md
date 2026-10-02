@@ -10,7 +10,8 @@ The short version:
 
 - **Every change needs an approved ticket** in ClickUp or Linear. Nothing starts from an untracked chat request.
 - **One ticket per PR, one person per PR.** Each member opens their own PR from their own ticket branch. No team branches and no combined PRs: we review and reject per developer, so nobody's work is held up by someone else's. If you find another problem, open another ticket.
-- **Your team lead reviews first.** They approve on your PR; Zedu reviewers pick it up after that.
+- **Your team lead reviews first.** They approve on your PR, the **Lead approval** check goes green, and Zedu reviewers pick it up after that.
+- **PRs come from your team's org fork.** PRs from personal forks or unregistered orgs fail **Lead approval**.
 - **Don't change protected files** (§6) unless a reviewer has agreed it first.
 - **You never push to `zedu-hng` or `zeduchat` directly.** All work happens in your fork and comes in as a PR.
 - **AI is a tool, not an authority.** You own everything you submit. If you can't explain it, don't submit it.
@@ -32,10 +33,11 @@ Fork from **`zedu-hng/zedu-mobile`**, not from `zeduchat`. Otherwise your PRs an
 
 ## 3. One-time setup (per team)
 
-1. Fork `zedu-hng/zedu-mobile` into your team's GitHub org.
+1. Fork `zedu-hng/zedu-mobile` into your team's GitHub org. Not a personal account: the org identifies your team.
 2. In the fork, go to **Actions** and enable workflows. Forks have them off by default, and your PR builds run there.
-3. Point CI at your team's backend: in the fork, go to **Settings → Secrets and variables → Actions → Variables**, and add `APP_ENV_FILE` containing your full `.env` (the keys are listed in `env.d.ts`). CI writes it to `.env` before building. Without it, builds succeed but the app has no backend.
-4. Each contributor clones the **team fork**:
+3. Register your team: your lead sends a Zedu reviewer the org name and every lead's GitHub handle. Reviewers add them to `.github/teams.yml`. Until then, your PRs fail **Lead approval**.
+4. Point CI at your team's backend: in the fork, go to **Settings → Secrets and variables → Actions → Variables**, and add `APP_ENV_FILE` containing your full `.env` (the keys are listed in `env.d.ts`). CI writes it to `.env` before building. Without it, builds succeed but the app has no backend.
+5. Each contributor clones the **team fork**:
 
    ```sh
    git clone https://github.com/<your-team>/zedu-mobile.git
@@ -111,7 +113,7 @@ Your fork builds your PR, with your fork's `APP_ENV_FILE`, so the build talks to
 - On your PR, the **Fork build** check finds that build for your latest commit, waits for it, and posts download links (Android APK, iOS simulator app). Reviewers test with those.
 - After a manual build, **Fork build** updates on its own within 15 minutes; comment `/fork-build` on the PR to check straight away. No build showing at all? Check that Actions is enabled in your fork and that it's synced.
 
-The other checks (lint, types, tests, security scans, **Branch name**, **Single author**, **Protected files**) run on the PR itself. On a first-time contribution, a maintainer has to approve the workflow run before anything runs.
+The other checks (lint, types, tests, security scans, **Branch name**, **Single author**, **Protected files**, **Lead approval**) run on the PR itself. The review bot posts its report as a PR comment. On a first-time contribution, a maintainer has to approve the workflow run before anything runs.
 
 ## 8. Open the PR
 
@@ -123,13 +125,15 @@ The other checks (lint, types, tests, security scans, **Branch name**, **Single 
    - your team lead's GitHub handle;
    - screenshots or a recording for visible changes, on the platforms you changed;
    - the AI-usage line.
-3. Ask your team lead to review it and leave an **Approve** review.
+3. A bot comments with your team and requests review from your lead(s). One of them leaves an **Approve** review.
 4. Run the first build (§7).
 5. Move the ticket to **IN REVIEW**.
 
 ## 9. Review and merge
 
-- **Your team lead approves first.** Zedu reviewers only pick up PRs the lead has approved.
+- **Your team lead approves first.** **Lead approval** goes green once a lead registered for your fork's org approves. It re-checks every 5 minutes. Zedu reviewers only pick up PRs with it green.
+- A lead who opens their own PR needs another lead's approval. A team with one lead is waived and goes straight to Zedu review.
+- If your lead approved somewhere GitHub can't see, a reviewer can add the `lead-verified` label.
 - **1 Zedu reviewer approval** is required, and it must come after your last push.
 - All checks must pass, including **Fork build**.
 - All review threads must be resolved. Don't resolve a thread without actually addressing it.

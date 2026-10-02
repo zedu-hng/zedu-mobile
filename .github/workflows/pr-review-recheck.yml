@@ -1,0 +1,49 @@
+name: PR Review recheck
+
+# GitHub doesn't re-run pull_request workflows when the base branch moves, so a fix merged to dev
+# leaves open PRs with a stale review failure. On each push to dev or central-staging this re-runs
+# the latest failed PR Review Bot run for every open PR. The re-run fetches the base branch's
+# review rules at run time, so it judges the PR's unchanged head against the current rules.
+
+on:
+  push:
+    branches:
+      - dev
+      - central-staging
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+  pull-requests: read
+
+concurrency:
+  group: pr-review-recheck-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  recheck:
+    name: Re-run stale reviews
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Re-run failed reviews for open PRs
+        run: |
+          gh api --paginate "repos/$REPO/pulls?state=open&per_page=100" \
+            --jq '.[] | select(.base.ref == "dev" or .base.ref == "central-staging") | "\(.number) \(.head.sha)"' |
+          while read -r number sha; do
+            # The runs API has no PR filter and fork runs have no pull_requests, so filter by head SHA.
+            run=$(gh api "repos/$REPO/actions/workflows/pr-review.yml/runs?head_sha=$sha&event=pull_request&per_page=20" \
+              --jq '.workflow_runs | sort_by(.created_at) | last // empty | "\(.id) \(.conclusion)"' || true)
+            [ -n "$run" ] || continue
+            read -r run_id conclusion <<< "$run"
+            case "$conclusion" in
+              failure|cancelled|timed_out)
+                echo "PR #$number: re-running review run $run_id"
+                gh run rerun "$run_id" --repo "$REPO" --failed || echo "::warning::PR #$number: rerun of $run_id failed" ;;
+              *) echo "PR #$number: review run $run_id is $conclusion; nothing to do" ;;
+            esac
+          done
