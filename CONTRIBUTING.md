@@ -132,7 +132,7 @@ The other checks (lint, types, tests, security scans, **Branch name**, **Single 
 
 ## 9. Review and merge
 
-- **Your team lead approves first.** **Lead approval** goes green once a lead registered for your fork's org approves. It re-checks as soon as a lead reviews. Zedu reviewers only pick up PRs with it green.
+- **Your team lead approves first.** **Lead approval** goes green once a lead registered for your fork's org approves. It re-checks as soon as a lead reviews (on a first-time contribution, once a maintainer has approved the run; until then a periodic re-check covers it). Zedu reviewers only pick up PRs with it green.
 - A lead who opens their own PR needs another lead's approval. A team with one lead is waived and goes straight to Zedu review.
 - If your lead approved somewhere GitHub can't see, a reviewer can add the `lead-verified` label.
 - **1 Zedu reviewer approval** is required, and it must come after your last push.

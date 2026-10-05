@@ -126,7 +126,9 @@ jobs:
     steps:
       - run: |
           protected='^(\.github/|AGENTS\.md$|CONTRIBUTING\.md$|\.eslintrc|\.prettierrc|\.prettierignore$|tsconfig\.json$|babel\.config\.js$|metro\.config\.js$|jest\.config\.js$|jest\.setup\.js$|commitlint\.config|\.gitleaks\.toml$|\.husky/|\.npmrc$|android/app/google-services\.json$|ios/GoogleService-Info\.plist$)'
-          changed=$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/files" --jq '.[] | "\(.status) \(.filename)"')
+          # A rename lists its old path too, so moving a protected or secret-like file away still counts.
+          changed=$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/files" \
+            --jq '.[] | "\(.status) \(.filename)", (select(.status == "renamed") | "renamed \(.previous_filename)")')
           files=$(cut -d' ' -f2- <<< "$changed")
           hits=$(grep -E "$protected" <<< "$files" || true)
           # Secret-like files (env files, keystores, certificates, credential JSON) also need the label.
