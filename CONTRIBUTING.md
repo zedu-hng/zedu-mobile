@@ -100,7 +100,8 @@ These files are owned by the reviewers. The **Protected files** check fails any 
 - `.github/` (workflows, templates, the review bot config);
 - `AGENTS.md` and `CONTRIBUTING.md`;
 - tooling config: `.eslintrc*`, `.prettierrc*`, `.prettierignore`, `tsconfig.json`, `babel.config.js`, `metro.config.js`, `jest.config.js`, `jest.setup.js`, `commitlint.config*`, `.gitleaks.toml`, `.husky/`, `.npmrc`;
-- Firebase config: `android/app/google-services.json`, `ios/GoogleService-Info.plist`.
+- Firebase config: `android/app/google-services.json`, `ios/GoogleService-Info.plist`;
+- secret-like files anywhere: `.env*`, keystores (`.keystore`, `.jks`), certificates and keys (`.p12`, `.pfx`, `.pem`, `.p8`), provisioning profiles, credential or service-account JSON.
 
 Dependency changes (`package.json`, lockfiles) are fine when the ticket needs them. **Moving or restructuring files needs its own approved ticket**; never mix it into feature work.
 
@@ -108,12 +109,12 @@ Dependency changes (`package.json`, lockfiles) are fine when the ticket needs th
 
 Your fork builds your PR, with your fork's `APP_ENV_FILE`, so the build talks to your team's backend. Zedu never holds your config or secrets.
 
-- **Builds run only while your PR is open.** Pushes to a ticket branch without an open PR skip the build. Docs-only pushes never build.
+- **Builds run only while your PR is open.** Pushes to a ticket branch without an open PR skip the build. A PR that changes only docs needs no build.
 - **First build:** opening the PR doesn't trigger one. In your fork, go to **Actions → PR build → Run workflow** on your branch, or push a commit. After that, every push builds automatically.
 - On your PR, the **Fork build** check finds that build for your latest commit, waits for it, and posts download links (Android APK, iOS simulator app). Reviewers test with those.
-- After a manual build, **Fork build** updates on its own within 15 minutes; comment `/fork-build` on the PR to check straight away. No build showing at all? Check that Actions is enabled in your fork and that it's synced.
+- Start a manual build within 30 minutes of opening the PR (or of your last push) and **Fork build** picks it up on its own. Later than that, or to check straight away, comment `/fork-build` on the PR. Comment it too after re-running a failed build in your fork. No build showing at all? Check that Actions is enabled in your fork and that it's synced.
 
-The other checks (lint, types, tests, security scans, **Branch name**, **Single author**, **Protected files**, **Lead approval**) run on the PR itself. The review bot posts its report as a PR comment. On a first-time contribution, a maintainer has to approve the workflow run before anything runs.
+The other checks (lint, types, tests, security scans, **Branch name**, **Single author**, **Protected files**, **Lead approval**) run on the PR itself. The review bot posts its report as a PR comment. On a first-time contribution, a maintainer has to approve the run before lint, tests and the scans start. **Branch name**, **Single author**, **Protected files**, **Lead approval** and **Fork build** run straight away.
 
 ## 8. Open the PR
 
@@ -131,7 +132,7 @@ The other checks (lint, types, tests, security scans, **Branch name**, **Single 
 
 ## 9. Review and merge
 
-- **Your team lead approves first.** **Lead approval** goes green once a lead registered for your fork's org approves. It re-checks every 5 minutes. Zedu reviewers only pick up PRs with it green.
+- **Your team lead approves first.** **Lead approval** goes green once a lead registered for your fork's org approves. It re-checks as soon as a lead reviews. Zedu reviewers only pick up PRs with it green.
 - A lead who opens their own PR needs another lead's approval. A team with one lead is waived and goes straight to Zedu review.
 - If your lead approved somewhere GitHub can't see, a reviewer can add the `lead-verified` label.
 - **1 Zedu reviewer approval** is required, and it must come after your last push.
