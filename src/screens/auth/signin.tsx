@@ -20,6 +20,7 @@ import Container from '@/components/layout/container';
 import { storeMultipleData } from '@/utils/helper';
 import { useTheme } from '@/theme/ThemeProvider';
 import { createAuthStyles } from '@/theme/createScreenStyles';
+import { normalizeEmail } from '@/utils/normalize-email';
 
 const SigninScreen: React.FC = () => {
   const { colors } = useTheme();
@@ -112,7 +113,7 @@ const SigninScreen: React.FC = () => {
     setButtonLoading(true);
 
     const payload = {
-      email,
+      email: normalizeEmail(email),
       password,
     };
 
@@ -206,6 +207,8 @@ const SigninScreen: React.FC = () => {
           placeholder="Email"
           value={email}
           onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCorrect={false}
         />
 
         <AppInput
