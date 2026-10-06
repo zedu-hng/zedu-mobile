@@ -62,7 +62,7 @@ jobs:
       contents: read
       pull-requests: write
       statuses: write
-    uses: zedu-hng/zedu-ci/.github/workflows/fork-build.yml@611ceaf520a06f6098fe417e86be7894df695c44
+    uses: zedu-hng/zedu-ci/.github/workflows/fork-build.yml@824330514fa1cf4dd28c3fc0277aa555d03a9b28
     with:
       artifact_help: |
         - **Android** (`android-apk`): unzip and install `app-release.apk` (allow installs from unknown sources).
