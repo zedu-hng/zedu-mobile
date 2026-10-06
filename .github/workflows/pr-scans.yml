@@ -28,7 +28,7 @@ jobs:
     if: github.repository == 'zedu-hng/zedu-mobile'
     permissions:
       contents: read
-    uses: zedu-hng/zedu-ci/.github/workflows/pr-scans.yml@1286dc5f1374a9eace0d0d46d534f7a92da23a49
+    uses: zedu-hng/zedu-ci/.github/workflows/pr-scans.yml@f8fb64f3ffbb1d529cd478fb81f1ad1bad97d52d
     with:
       semgrep_configs: p/typescript p/react p/security-audit
       semgrep_paths: src App.tsx
