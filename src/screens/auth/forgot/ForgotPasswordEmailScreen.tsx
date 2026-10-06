@@ -11,6 +11,7 @@ import { useDataContext } from '@/store/useDataContext';
 import { ACTIONS } from '@/store/types';
 import { useTheme } from '@/theme/ThemeProvider';
 import { createAuthStyles } from '@/theme/createScreenStyles';
+import { normalizeEmail } from '@/utils/normalize-email';
 
 const ForgotPasswordEmailScreen: React.FC = () => {
   const { colors } = useTheme();
@@ -23,14 +24,16 @@ const ForgotPasswordEmailScreen: React.FC = () => {
   const handleSubmit = async () => {
     setLoading(true);
 
+    const normalizedEmail = normalizeEmail(email);
+
     const { data, error } = await PostRequest('/auth/password-reset', {
-      email: email,
+      email: normalizedEmail,
     });
 
     if (!error) {
       dispatch({
         type: ACTIONS.AUTH_FLOW,
-        payload: { email: email, code: '' },
+        payload: { email: normalizedEmail, code: '' },
       });
       dispatch({ type: ACTIONS.SUCCESS, payload: data.message });
       navigation.navigate('ForgotPasswordCode');
@@ -72,6 +75,8 @@ const ForgotPasswordEmailScreen: React.FC = () => {
           placeholder="Email"
           value={email}
           onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCorrect={false}
           style={styles.input}
         />
         <AppButton

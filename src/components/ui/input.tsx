@@ -20,6 +20,7 @@ interface AppInputProps {
   secureTextEntry?: boolean;
   error?: string;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  autoCorrect?: boolean;
   keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad';
   disabled?: boolean;
   multiline?: boolean;
@@ -36,6 +37,7 @@ export const AppInput: React.FC<AppInputProps> = ({
   secureTextEntry,
   error,
   autoCapitalize = 'none',
+  autoCorrect,
   keyboardType = 'default',
   disabled = false,
   multiline,
@@ -116,6 +118,7 @@ export const AppInput: React.FC<AppInputProps> = ({
           onChangeText={onChangeText}
           secureTextEntry={secureTextEntry && !isPasswordVisible}
           autoCapitalize={autoCapitalize}
+          autoCorrect={autoCorrect}
           keyboardType={keyboardType}
           onFocus={() => {
             setIsFocused(true);

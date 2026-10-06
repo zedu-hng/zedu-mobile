@@ -23,6 +23,7 @@ import { configureGoogleSignIn, signInWithGoogle } from '@/lib/google-auth';
 import { signInWithApple } from '@/lib/apple-auth';
 import { useTheme } from '@/theme/ThemeProvider';
 import { createAuthStyles } from '@/theme/createScreenStyles';
+import { normalizeEmail } from '@/utils/normalize-email';
 // import RNPickerSelect from 'react-native-picker-select';
 
 const SignupScreen: React.FC = () => {
@@ -130,7 +131,7 @@ const SignupScreen: React.FC = () => {
     const formData = {
       accountType,
       orgName,
-      email,
+      email: normalizeEmail(email),
       password,
       country,
     };
@@ -282,6 +283,8 @@ const SignupScreen: React.FC = () => {
               placeholder="Email"
               value={email}
               onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCorrect={false}
             />
 
             <AppInput
@@ -337,6 +340,8 @@ const SignupScreen: React.FC = () => {
               placeholder="Email"
               value={email}
               onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCorrect={false}
             />
             <AppInput
               label="Password"
