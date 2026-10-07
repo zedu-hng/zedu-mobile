@@ -1,3 +1,4 @@
+// E2E check of the zedu-ci review workflows. Do not merge.
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import BootSplash from 'react-native-bootsplash';
 import { useEffect, useRef, useState } from 'react';
