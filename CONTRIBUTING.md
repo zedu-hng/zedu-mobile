@@ -127,8 +127,7 @@ The other checks (lint, types, tests, security scans, **Branch name**, **Single 
    - what changed and why;
    - how to test and what to expect;
    - your team lead's GitHub handle;
-   - screenshots or a recording for visible changes, on the platforms you changed;
-   - the AI-usage line.
+   - screenshots or a recording for visible changes, on the platforms you changed.
 3. A bot comments with your team and requests review from your lead(s). One of them leaves an **Approve** review.
 4. Run the first build (§7).
 5. Move the ticket to **IN REVIEW**.
@@ -163,22 +162,7 @@ Anything in `.env` or compiled into the app is readable by anyone who has the ap
 
 If you expose a secret, deleting it in the next commit is not enough. Tell a reviewer immediately so it can be rotated.
 
-## 11. AI usage
-
-AI is fine for explaining code, drafting implementations, tests, debugging, refactoring and docs.
-
-Don't:
-
-- paste generated code you haven't read;
-- submit code you can't explain;
-- give AI tools secrets or user data;
-- treat AI output as a substitute for testing or review.
-
-For significant AI-assisted changes, add one line to the PR saying how AI was used.
-
-If you use an AI coding agent, point it at `AGENTS.md`. It holds the repo conventions agents need, and most agents load it automatically.
-
-## 12. Definition of done
+## 11. Definition of done
 
 - Acceptance criteria met.
 - All checks green on the PR, including **Fork build**.
@@ -187,7 +171,7 @@ If you use an AI coding agent, point it at `AGENTS.md`. It holds the repo conven
 - Verified on the build.
 - Ticket closed in ClickUp or Linear.
 
-## 13. Getting unstuck
+## 12. Getting unstuck
 
 Ask in your team's channel first, then the project channel. For a blocker, include:
 
