@@ -60,11 +60,11 @@ const ForgotPasswordEmailScreen: React.FC = () => {
         </View>
 
         <AppText variant="bold" size={23} style={styles.titleCompact}>
-          Forgot password
+          Forgot Password
         </AppText>
         <AppText size={18} style={styles.subtitle}>
-          Enter the email you used in creating your account, we will send you
-          instructions on how to reset your password.
+          Enter the email address you used to create your account. We'll send
+          you instructions to reset your password.
         </AppText>
 
         <AppInput
