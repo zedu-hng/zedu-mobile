@@ -1,7 +1,11 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import BuzzService from '@/services/buzz.service';
 import { OrgBuzz } from '@/types/buzz';
-import { normalizeOrgBuzzPagination, OrgBuzzFilter } from '@/utils/org-buzz';
+import {
+  matchesOrgBuzzFilter,
+  normalizeOrgBuzzPagination,
+  OrgBuzzFilter,
+} from '@/utils/org-buzz';
 
 const PAGE_LIMIT = 20;
 
@@ -57,14 +61,16 @@ export const useOrgBuzzes = ({
 
         let updatedList: OrgBuzz[];
         if (isInitial) {
-          updatedList = newBuzzes;
+          updatedList = newBuzzes.filter(item =>
+            matchesOrgBuzzFilter(item, filter),
+          );
         } else {
           const existingIds = new Set(
             buzzesRef.current.map(item => item.buzz_id),
           );
-          const filteredNewList = newBuzzes.filter(
-            item => !existingIds.has(item.buzz_id),
-          );
+          const filteredNewList = newBuzzes
+            .filter(item => matchesOrgBuzzFilter(item, filter))
+            .filter(item => !existingIds.has(item.buzz_id));
           updatedList = [...buzzesRef.current, ...filteredNewList];
         }
 
