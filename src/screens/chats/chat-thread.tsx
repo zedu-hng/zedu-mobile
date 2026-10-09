@@ -28,6 +28,8 @@ import ChatBackground from '@/components/layout/chat/chat-background';
 import { ShowNotify } from '@/components/ui/toast';
 import uuid from 'react-native-uuid';
 import ThreadScreenHeader from '@/components/layout/chat/thread-screen-header';
+import StickyDateLabel from '@/components/layout/chat/sticky-date-label';
+import { useStickyDateLabel } from '@/hooks/useStickyDateLabel';
 
 const ChatThreadScreen = ({ navigation, route }: any) => {
   const { colors } = useTheme();
@@ -35,6 +37,13 @@ const ChatThreadScreen = ({ navigation, route }: any) => {
   const [message, setMessage] = useState('');
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const {
+    dateLabel,
+    listTop,
+    onListLayout,
+    onViewableItemsChanged,
+    viewabilityConfig,
+  } = useStickyDateLabel();
   const actionSheetRef = useRef<any>(null);
   const pickerSheetRef = useRef<any>(null);
   const [selectedMsg, setSelectedMsg] = useState<Channel | null>(null);
@@ -220,6 +229,9 @@ const ChatThreadScreen = ({ navigation, route }: any) => {
         ref={flatListRef}
         data={replyChat}
         inverted
+        onLayout={onListLayout}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
         keyExtractor={item => String(item.id ?? item.message_id)}
         extraData={replyChat}
         renderItem={({ item, index }) => (
@@ -251,6 +263,7 @@ const ChatThreadScreen = ({ navigation, route }: any) => {
           ) : null
         }
       />
+      <StickyDateLabel label={dateLabel} top={listTop} />
 
       {selectedMsg && (
         <ReplyMessageAction
