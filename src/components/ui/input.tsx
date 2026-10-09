@@ -19,6 +19,7 @@ interface AppInputProps {
   onChangeText: (text: string) => void;
   secureTextEntry?: boolean;
   error?: string;
+  hint?: string;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad';
   disabled?: boolean;
@@ -35,6 +36,7 @@ export const AppInput: React.FC<AppInputProps> = ({
   onChangeText,
   secureTextEntry,
   error,
+  hint,
   autoCapitalize = 'none',
   keyboardType = 'default',
   disabled = false,
@@ -74,6 +76,11 @@ export const AppInput: React.FC<AppInputProps> = ({
         },
         errorText: {
           color: colors.error,
+          marginTop: normalize(4),
+          fontSize: normalize(12),
+        },
+        hintText: {
+          color: colors.textSecondary,
           marginTop: normalize(4),
           fontSize: normalize(12),
         },
@@ -142,6 +149,11 @@ export const AppInput: React.FC<AppInputProps> = ({
       {error && (
         <AppText size={12} style={styles.errorText}>
           {error}
+        </AppText>
+      )}
+      {hint && !error && (
+        <AppText size={12} style={styles.hintText}>
+          {hint}
         </AppText>
       )}
     </View>
