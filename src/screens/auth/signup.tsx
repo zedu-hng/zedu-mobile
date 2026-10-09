@@ -290,6 +290,7 @@ const SignupScreen: React.FC = () => {
               value={password}
               onChangeText={setPassword}
               secureTextEntry
+              hint="Use at least 6 characters"
             />
           </View>
         ) : (
@@ -344,6 +345,7 @@ const SignupScreen: React.FC = () => {
               value={password}
               onChangeText={setPassword}
               secureTextEntry
+              hint="Use at least 6 characters"
             />
           </View>
         )}
