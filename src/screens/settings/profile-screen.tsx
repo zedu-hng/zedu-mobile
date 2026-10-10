@@ -53,6 +53,7 @@ const ProfileScreen = ({ navigation }: any) => {
   const [isSaving, setIsSaving] = useState(false);
   const [isLeavingOrg, setIsLeavingOrg] = useState(false);
   const [isAway, setIsAway] = useState(user?.online === false);
+  const [statusRefreshKey, setStatusRefreshKey] = useState(0);
   const [showCropper, setShowCropper] = useState(false);
   const [tempImagePath, setTempImagePath] = useState<string | null>(null);
 
@@ -127,6 +128,8 @@ const ProfileScreen = ({ navigation }: any) => {
     };
 
     await PostRequest('/profile/change-status', payload);
+
+    setStatusRefreshKey(key => key + 1);
   };
 
   const handleSave = async () => {
@@ -348,7 +351,11 @@ const ProfileScreen = ({ navigation }: any) => {
                 Edit Photo
               </AppText>
             </TouchableOpacity>
-            <UserProfileStatus user={user} />
+            <UserProfileStatus
+              user={user}
+              userId={user?.user_id ?? user?.id}
+              refreshKey={statusRefreshKey}
+            />
           </View>
 
           <TouchableOpacity
@@ -373,7 +380,7 @@ const ProfileScreen = ({ navigation }: any) => {
                 </AppText>
                 <AppText style={styles.awayDescription}>
                   {isAway
-                    ? 'Shown as offline. Tap to go active.'
+                    ? 'Shown as away. Tap to go active.'
                     : 'Shown as online. Tap to go away.'}
                 </AppText>
               </View>

@@ -7,15 +7,17 @@ import { getUserStatusDisplay, UserStatusSource } from '@/utils/user-status';
 interface UserProfileStatusProps {
   user?: UserStatusSource | null;
   userId?: string | number | null;
+  refreshKey?: number;
   style?: ViewStyle;
 }
 
 export const UserProfileStatus = ({
   user,
   userId,
+  refreshKey,
   style,
 }: UserProfileStatusProps) => {
-  const fetchedStatus = useUserProfileStatus(userId);
+  const fetchedStatus = useUserProfileStatus(userId, refreshKey);
   const localStatus = useMemo(() => getUserStatusDisplay(user), [user]);
   const status = fetchedStatus ?? localStatus;
 

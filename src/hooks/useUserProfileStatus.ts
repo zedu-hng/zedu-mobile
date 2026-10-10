@@ -11,7 +11,10 @@ type UserStatusApiResponse = {
   };
 };
 
-export const useUserProfileStatus = (userId?: string | number | null) => {
+export const useUserProfileStatus = (
+  userId?: string | number | null,
+  refreshKey?: number,
+) => {
   const [status, setStatus] = useState<UserStatusDisplay | null>(null);
 
   useEffect(() => {
@@ -50,7 +53,7 @@ export const useUserProfileStatus = (userId?: string | number | null) => {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, refreshKey]);
 
   return status;
 };
