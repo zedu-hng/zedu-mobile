@@ -2174,9 +2174,10 @@ export function createWelcomeScreenStyles(colors: ThemeColors) {
       flex: 1,
       backgroundColor: colors.surface,
       paddingHorizontal: 25,
+      justifyContent: 'center',
     },
     topSection: {
-      flex: 2,
+      marginBottom: 40,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -2201,7 +2202,7 @@ export function createWelcomeScreenStyles(colors: ThemeColors) {
       paddingHorizontal: 40,
     },
     middleSection: {
-      flex: 1,
+      marginBottom: 48,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -2220,7 +2221,6 @@ export function createWelcomeScreenStyles(colors: ThemeColors) {
       color: colors.primary,
     },
     bottomSection: {
-      flex: 1,
       justifyContent: 'flex-end',
       paddingBottom: 20,
     },
