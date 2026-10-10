@@ -286,9 +286,39 @@ export function createMentionListStyles(colors: ThemeColors) {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
+      paddingHorizontal: normalize(32),
+    },
+    emptyImage: {
+      height: normalize(80),
+      width: normalize(80),
+      resizeMode: 'contain',
+      marginBottom: normalize(16),
+    },
+    emptyTitle: {
+      color: colors.textPrimary,
+      textAlign: 'center',
+      marginBottom: normalize(8),
     },
     emptyText: {
       color: colors.textSecondary,
+      textAlign: 'center',
+    },
+    emptyButton: {
+      marginTop: normalize(24),
+    },
+    endOfList: {
+      paddingVertical: normalize(24),
+      paddingHorizontal: normalize(32),
+      alignItems: 'center',
+    },
+    endOfListTitle: {
+      color: colors.textPrimary,
+      marginTop: normalize(8),
+    },
+    endOfListText: {
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginTop: normalize(4),
     },
     footerLoader: {
       paddingVertical: normalize(20),

@@ -24,8 +24,11 @@ import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5';
 import { ACTIONS } from '@/store/types';
 import ChatSkeleton from '@/components/skeleton/chat-skeleton';
 import { UserAvatar } from '../channels/user-avatar';
+import { AppButton } from '@/components/ui/button';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 type MentionNavigationProp = StackNavigationProp<RootStackParamList>;
+type TabNavigationProp = BottomTabNavigationProp<{ Channels: undefined }>;
 
 const MentionsScreen = () => {
   const navigation = useNavigation<MentionNavigationProp>();
@@ -33,12 +36,14 @@ const MentionsScreen = () => {
   const styles = React.useMemo(() => createMentionListStyles(colors), [colors]);
   const drawerNavigation =
     useNavigation<DrawerNavigationProp<RootStackParamList>>();
+  const tabNavigation = useNavigation<TabNavigationProp>();
   const { state, dispatch } = useDataContext();
   const { user, orgData, orgId } = state;
   const {
     mentionList,
     isLoading,
     isFetchingMore,
+    hasMore,
     refreshing,
     handleLoadMore,
     onRefresh,
@@ -176,12 +181,6 @@ const MentionsScreen = () => {
             <ChatSkeleton key={key} />
           ))}
         </ScrollView>
-      ) : mentionList.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <AppText size={14} style={styles.emptyText}>
-            No mentions yet
-          </AppText>
-        </View>
       ) : (
         <FlatList
           data={mentionList}
@@ -189,8 +188,32 @@ const MentionsScreen = () => {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           renderItem={renderMentionCard}
-          onEndReached={handleLoadMore}
+          onEndReached={() => {
+            if (mentionList.length > 0) handleLoadMore();
+          }}
           onEndReachedThreshold={0.5}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Image
+                source={require('@/assets/images/empty-chat.png')}
+                style={styles.emptyImage}
+                accessible={false}
+                importantForAccessibility="no"
+              />
+              <AppText variant="bold" size={18} style={styles.emptyTitle}>
+                No threads yet
+              </AppText>
+              <AppText size={14} style={styles.emptyText}>
+                When someone replies to your message or mentions you in a
+                thread, it shows up here so you can jump straight back in.
+              </AppText>
+              <AppButton
+                title="Browse channels"
+                onPress={() => tabNavigation.navigate('Channels')}
+                style={styles.emptyButton}
+              />
+            </View>
+          }
           refreshControl={
             <ThemedRefreshControl
               refreshing={refreshing}
@@ -201,6 +224,20 @@ const MentionsScreen = () => {
             isFetchingMore ? (
               <View style={styles.footerLoader}>
                 <ActivityIndicator color={colors.primary} size="small" />
+              </View>
+            ) : !hasMore && mentionList.length > 0 ? (
+              <View style={styles.endOfList}>
+                <FontAwesome5Icon
+                  name="check-circle"
+                  size={20}
+                  color={colors.primary}
+                />
+                <AppText variant="bold" size={14} style={styles.endOfListTitle}>
+                  You're all caught up
+                </AppText>
+                <AppText size={12} style={styles.endOfListText}>
+                  New replies and mentions will appear at the top.
+                </AppText>
               </View>
             ) : (
               <View style={{ height: 20 }} />
