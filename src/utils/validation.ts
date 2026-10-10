@@ -5,10 +5,10 @@ export const validateSignup = (data: any) => {
   // 2. Organization Specific Validations
   if (accountType === 'Organization') {
     if (!orgName || orgName.trim().length === 0) {
-      return 'Organization name is required';
+      return 'Organisation name is required';
     }
     if (!country) {
-      return "Please select your organization's country";
+      return "Please select your organisation's country";
     }
 
     if (!email || !emailRegex.test(email)) {
