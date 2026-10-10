@@ -45,7 +45,6 @@ export const MentionSheet = ({
     );
   }, [query, showChannelMention]);
 
-  // Capped search with early exit to prevent CPU freeze & OOM crashes on large member lists
   const filteredParticipants = useMemo(() => {
     const q = query.trim().toLowerCase();
 
@@ -60,7 +59,7 @@ export const MentionSheet = ({
       if (username.includes(q)) {
         results.push(participant);
         if (results.length >= MAX_MENTION_RESULTS) {
-          break; // Stop iterating once we have enough matches
+          break;
         }
       }
     }
