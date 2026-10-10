@@ -8,6 +8,7 @@ import {
   Clipboard,
   InteractionManager,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import EmojiPicker, { EmojiType } from 'rn-emoji-keyboard';
 import { AppText } from '@/components/ui/text';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -281,7 +282,7 @@ export const MessageAction = forwardRef<
       <AppBottomSheet
         ref={ref}
         snapPoints={mode === 'delete' ? ['40%'] : ['65%']}
-        paddingBottom={normalize(110)}
+        paddingBottom={insets.bottom + normalize(20)}
         onClose={() => {
           setMode('actions');
           if (!isForwardOpen) {
