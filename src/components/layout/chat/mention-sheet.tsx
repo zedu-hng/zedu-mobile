@@ -48,7 +48,7 @@ export const MentionSheet = ({
   // Capped search with early exit to prevent CPU freeze & OOM crashes on large member lists
   const filteredParticipants = useMemo(() => {
     const q = query.trim().toLowerCase();
-    
+
     if (!q) {
       return safeParticipants.slice(0, MAX_MENTION_RESULTS);
     }
@@ -121,9 +121,7 @@ export const MentionSheet = ({
               style={styles.avatar}
             />
             <View
-              style={
-                item.online ? styles.onlineBadge : styles.offlineBadge
-              }
+              style={item.online ? styles.onlineBadge : styles.offlineBadge}
             />
           </View>
 
@@ -141,15 +139,18 @@ export const MentionSheet = ({
     [styles, onSelect],
   );
 
-  const renderEmptyComponent = useCallback(() => (
-    <View style={styles.emptyContainer}>
-      <AppText style={styles.emptyText}>
-        {safeParticipants.length === 0
-          ? 'No members available'
-          : 'No matches found'}
-      </AppText>
-    </View>
-  ), [safeParticipants.length, styles]);
+  const renderEmptyComponent = useCallback(
+    () => (
+      <View style={styles.emptyContainer}>
+        <AppText style={styles.emptyText}>
+          {safeParticipants.length === 0
+            ? 'No members available'
+            : 'No matches found'}
+        </AppText>
+      </View>
+    ),
+    [safeParticipants.length, styles],
+  );
 
   return (
     <View style={styles.container}>
