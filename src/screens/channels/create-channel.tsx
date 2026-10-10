@@ -143,7 +143,7 @@ const CreateChannelScreen = ({ navigation }: any) => {
           ]}
         >
           <TextInput
-            placeholder="Description(optional)"
+            placeholder="Description (optional)"
             value={description}
             onChangeText={setDescription}
             style={{ paddingVertical: 8, color: colors.textPrimary }}
