@@ -37,13 +37,6 @@ const ChannelThreadScreen = ({ navigation, route }: any) => {
   const [message, setMessage] = useState('');
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
   const flatListRef = useRef<FlatList>(null);
-  const {
-    dateLabel,
-    listTop,
-    onListLayout,
-    onViewableItemsChanged,
-    viewabilityConfig,
-  } = useStickyDateLabel();
   const actionSheetRef = useRef<any>(null);
   const pickerSheetRef = useRef<any>(null);
   const mentionUserSheetRef = useRef<MentionUserBottomSheetRef>(null);
@@ -62,6 +55,16 @@ const ChannelThreadScreen = ({ navigation, route }: any) => {
     channel: _channel,
     channelDetails,
   } = state;
+  const {
+    dateLabel,
+    listTop,
+    onListLayout,
+    onViewableItemsChanged,
+    viewabilityConfig,
+  } = useStickyDateLabel({
+    date: selectedMessage?.created_at,
+    lastIndex: (replyChat?.length ?? 0) - 1,
+  });
   const { thread_id, channel_id } = route.params;
 
   const { loadMore, isFetchingMore } = UseReplyChat({

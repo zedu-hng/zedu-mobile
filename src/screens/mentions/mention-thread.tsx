@@ -40,13 +40,6 @@ const MentionThreadScreen = ({ navigation, route }: any) => {
   const [message, setMessage] = useState('');
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
   const flatListRef = useRef<FlatList>(null);
-  const {
-    dateLabel,
-    listTop,
-    onListLayout,
-    onViewableItemsChanged,
-    viewabilityConfig,
-  } = useStickyDateLabel();
   const actionSheetRef = useRef<any>(null);
   const pickerSheetRef = useRef<any>(null);
   const [selectedMsg, setSelectedMsg] = useState<Channel | null>(null);
@@ -63,6 +56,16 @@ const MentionThreadScreen = ({ navigation, route }: any) => {
     selectedMsg: selectedMessage,
     channel: _channel,
   } = state;
+  const {
+    dateLabel,
+    listTop,
+    onListLayout,
+    onViewableItemsChanged,
+    viewabilityConfig,
+  } = useStickyDateLabel({
+    date: selectedMessage?.created_at,
+    lastIndex: (replyChat?.length ?? 0) - 1,
+  });
   const { thread_id, channel_id, mention } = route.params;
 
   const { loadMore, isFetchingMore } = UseReplyChat({

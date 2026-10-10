@@ -18,6 +18,13 @@ describe('formatDateLabel', () => {
     expect(formatDateLabel(moment().subtract(1, 'day'))).toBe('Yesterday');
     expect(formatDateLabel('2026-10-05T12:00:00')).toBe('October 5, 2026');
   });
+
+  test('shows future dates as a full date', () => {
+    const inThreeDays = moment().add(3, 'days');
+    expect(formatDateLabel(inThreeDays)).toBe(
+      inThreeDays.format('MMMM D, YYYY'),
+    );
+  });
 });
 
 describe('getTopVisibleDateLabel', () => {
@@ -32,5 +39,17 @@ describe('getTopVisibleDateLabel', () => {
 
   test('returns an empty label when nothing is visible', () => {
     expect(getTopVisibleDateLabel([])).toBe('');
+  });
+
+  test("uses the thread parent's date once the oldest reply is visible", () => {
+    const parent = { date: '2026-10-05T10:00:00', lastIndex: 2 };
+    const replies = [
+      token(1, '2026-10-07T08:00:00'),
+      token(2, '2026-10-07T07:00:00'),
+    ];
+    expect(getTopVisibleDateLabel(replies, parent)).toBe('October 5, 2026');
+    expect(
+      getTopVisibleDateLabel([token(0, '2026-10-07T09:00:00')], parent),
+    ).toBe('October 7, 2026');
   });
 });
