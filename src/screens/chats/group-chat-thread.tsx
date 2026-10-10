@@ -31,6 +31,8 @@ import MentionUserBottomSheet, {
   MentionUserBottomSheetRef,
 } from '@/components/layout/chat/mention-user-bottomsheet';
 import ThreadScreenHeader from '@/components/layout/chat/thread-screen-header';
+import StickyDateLabel from '@/components/layout/chat/sticky-date-label';
+import { useStickyDateLabel } from '@/hooks/useStickyDateLabel';
 
 const GroupChatThreadScreen = ({ navigation, route }: any) => {
   const { colors } = useTheme();
@@ -56,6 +58,16 @@ const GroupChatThreadScreen = ({ navigation, route }: any) => {
     channel: _channel,
     participant,
   } = state;
+  const {
+    dateLabel,
+    listTop,
+    onListLayout,
+    onViewableItemsChanged,
+    viewabilityConfig,
+  } = useStickyDateLabel({
+    date: selectedMessage?.created_at,
+    lastIndex: (replyChat?.length ?? 0) - 1,
+  });
   const { thread_id, channel_id } = route.params;
 
   const { loadMore, isFetchingMore } = UseReplyChat({
@@ -221,6 +233,9 @@ const GroupChatThreadScreen = ({ navigation, route }: any) => {
         ref={flatListRef}
         data={replyChat}
         inverted
+        onLayout={onListLayout}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
         keyExtractor={item => String(item.id ?? item.message_id)}
         extraData={replyChat}
         renderItem={({ item, index }) => (
@@ -258,6 +273,7 @@ const GroupChatThreadScreen = ({ navigation, route }: any) => {
           ) : null
         }
       />
+      <StickyDateLabel label={dateLabel} top={listTop} />
 
       {selectedMsg && (
         <ReplyMessageAction
