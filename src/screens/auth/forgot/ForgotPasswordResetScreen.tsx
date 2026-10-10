@@ -33,10 +33,10 @@ const ForgotPasswordResetScreen: React.FC = () => {
       return;
     }
 
-    if (newPassword.length < 6) {
+    if (newPassword.length < 7) {
       dispatch({
         type: ACTIONS.ERROR,
-        payload: 'Password must be at least 6 characters',
+        payload: 'Password must be at least 7 characters',
       });
       return;
     }
