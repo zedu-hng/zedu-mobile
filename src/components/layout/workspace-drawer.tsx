@@ -174,9 +174,7 @@ const WorkspaceDrawer = (props: DrawerContentComponentProps) => {
             label="Help"
             icon="help-circle"
             onPress={() =>
-              Linking.openURL(
-                `${CLIENT_URL || 'https://zedu.chat'}/contact-sales`,
-              )
+              Linking.openURL(`${CLIENT_URL || 'https://zedu.chat'}/resources`)
             }
           />
         </View>
