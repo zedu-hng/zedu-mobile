@@ -75,13 +75,13 @@ const WelcomeScreen: React.FC = () => {
           />
         </View>
         <AppText variant="regular" style={styles.slogan}>
-          Seamless video calls and meetings for every learning community.
+          Connect. Learn. Grow. Together.
         </AppText>
       </View>
 
       <View style={styles.middleSection}>
         <AppText variant="bold" style={styles.welcomeTitle}>
-          Welcome to Zedu
+          Welcome to Zedu 👋
         </AppText>
 
         <AppText size={13} style={styles.legalText}>
@@ -106,12 +106,12 @@ const WelcomeScreen: React.FC = () => {
 
       <View style={styles.bottomSection}>
         <AppButton
-          title="Create Account"
+          title="Get Started"
           onPress={() => navigation.navigate('Signup')}
           style={{ marginBottom: normalize(14) }}
         />
         <AppButton
-          title="Login"
+          title="Sign In"
           variant="secondary"
           onPress={() => navigation.navigate('Signin')}
         />
