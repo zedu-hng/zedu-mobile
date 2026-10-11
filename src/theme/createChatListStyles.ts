@@ -66,6 +66,14 @@ export function createChatListStyles(colors: ThemeColors) {
       paddingTop: normalize(20),
       paddingBottom: normalize(100),
     },
+    channelList: {
+      flex: 1,
+      // Keep the scrolling viewport above the 56px button and its 20px offset.
+      marginBottom: normalize(56) + normalize(20) + normalize(12),
+    },
+    channelListContent: {
+      paddingBottom: normalize(12),
+    },
     chatItem: {
       flexDirection: 'row',
       marginBottom: normalize(25),

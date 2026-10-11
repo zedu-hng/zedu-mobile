@@ -133,9 +133,13 @@ const ChannelHome = () => {
             </View>
           ) : (
             <FlatList
+              style={styles.channelList}
               data={channels}
               keyExtractor={item => item.channels_id}
-              contentContainerStyle={styles.listContent}
+              contentContainerStyle={[
+                styles.listContent,
+                styles.channelListContent,
+              ]}
               showsVerticalScrollIndicator={false}
               renderItem={({ item }) => {
                 const hasActiveBuzz = Boolean(item?.active_buzz);
