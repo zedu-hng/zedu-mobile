@@ -39,6 +39,7 @@ const BrowseChannel = () => {
   const [search, setSearch] = useState('');
   const { channels, loading, loadingMore, refresh, loadMore } =
     useBrowseChannels(orgId, search);
+  const hasSearch = search.trim().length > 0;
 
   const onboardingSheetRef = useRef<any>(null);
 
@@ -130,17 +131,32 @@ const BrowseChannel = () => {
       ) : (
         <>
           {!loading && channels?.length === 0 ? (
-            <View
-              style={{
-                justifyContent: 'center',
-                alignItems: 'center',
-                marginTop: normalize(150),
-              }}
-            >
+            <View style={styles.emptyState}>
               <Image
                 source={require('@/assets/images/empty-chat.png')}
-                style={{ objectFit: 'contain', height: normalize(50) }}
+                style={styles.emptyImage}
+                resizeMode="contain"
               />
+              <AppText variant="bold" size={18} style={styles.emptyTitle}>
+                {hasSearch ? 'No channels found' : 'No channels to browse yet'}
+              </AppText>
+              <AppText size={14} style={styles.emptyMessage}>
+                {hasSearch
+                  ? 'Try another search or clear your search to see all channels.'
+                  : 'Public channels will appear here when they’re available.'}
+              </AppText>
+              {hasSearch && (
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear channel search"
+                  onPress={() => setSearch('')}
+                  style={styles.clearSearchButton}
+                >
+                  <AppText variant="bold" style={styles.clearSearchText}>
+                    Clear search
+                  </AppText>
+                </TouchableOpacity>
+              )}
             </View>
           ) : (
             <FlatList

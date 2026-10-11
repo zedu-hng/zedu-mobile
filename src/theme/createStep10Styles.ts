@@ -65,6 +65,37 @@ export function createChannelSetupStyles(colors: ThemeColors) {
         paddingTop: normalize(20),
         paddingBottom: normalize(100),
       },
+      emptyState: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: normalize(32),
+      },
+      emptyImage: {
+        width: normalize(56),
+        height: normalize(56),
+        marginBottom: normalize(16),
+      },
+      emptyTitle: {
+        color: colors.textPrimary,
+        textAlign: 'center',
+        marginBottom: normalize(8),
+      },
+      emptyMessage: {
+        color: colors.textSecondary,
+        textAlign: 'center',
+        lineHeight: normalize(20),
+      },
+      clearSearchButton: {
+        minHeight: normalize(44),
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: normalize(16),
+        marginTop: normalize(12),
+      },
+      clearSearchText: {
+        color: colors.primary,
+      },
       chatItem: {
         flexDirection: 'row',
         marginBottom: normalize(25),
