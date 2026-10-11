@@ -45,6 +45,12 @@ const normaliseThreadItem = (thread: ThreadListItem): ThreadListItem => ({
   is_unread: isThreadUnread(thread),
 });
 
+/**
+ * Normalizes organisation-thread API response shapes for the mentions list.
+ *
+ * @param data Raw API response, including wrapped or direct thread payloads.
+ * @returns Normalized threads and the unseen-thread count.
+ */
 export const parseOrganisationThreadsResponse = (
   data:
     | { data?: OrganisationThreadsPayload | ThreadListItem[] }
