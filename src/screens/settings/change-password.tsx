@@ -16,8 +16,10 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { createSettingsSubScreenStyles } from '@/theme/createScreenStyles';
 import { PutRequest } from '@/utils/requests';
 import { ACTIONS } from '@/store/types';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const ChangePasswordScreen = ({ navigation }: any) => {
+  const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const styles = useMemo(() => createSettingsSubScreenStyles(colors), [colors]);
   const { dispatch } = useDataContext();
@@ -90,7 +92,7 @@ const ChangePasswordScreen = ({ navigation }: any) => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingHorizontal: 20,
-            paddingBottom: 20,
+            paddingBottom: Math.max(insets.bottom + 40, 60),
             paddingTop: 20,
             flexGrow: 1,
           }}
@@ -123,31 +125,30 @@ const ChangePasswordScreen = ({ navigation }: any) => {
             <AppText style={styles.noteText}>
               Note: You would need to login again to effect this change.
             </AppText>
+
+            <TouchableOpacity
+              style={[
+                styles.saveButtonCompact,
+                { marginTop: 28, width: '100%' },
+                (!isFormValid || isSaving) && styles.disabledButton,
+              ]}
+              activeOpacity={0.8}
+              onPress={handleSave}
+              disabled={!isFormValid || isSaving}
+            >
+              {isSaving && (
+                <ActivityIndicator
+                  size="small"
+                  color={colors.white}
+                  style={{ marginRight: 8 }}
+                />
+              )}
+              <AppText variant="bold" style={styles.saveButtonText}>
+                Save Changes
+              </AppText>
+            </TouchableOpacity>
           </View>
         </ScrollView>
-
-        <View style={styles.bottomActions}>
-          <TouchableOpacity
-            style={[
-              styles.saveButtonCompact,
-              (!isFormValid || isSaving) && styles.disabledButton,
-            ]}
-            activeOpacity={0.8}
-            onPress={handleSave}
-            disabled={!isFormValid || isSaving}
-          >
-            {isSaving && (
-              <ActivityIndicator
-                size="small"
-                color={colors.white}
-                style={{ marginRight: 8 }}
-              />
-            )}
-            <AppText variant="bold" style={styles.saveButtonText}>
-              Save Changes
-            </AppText>
-          </TouchableOpacity>
-        </View>
       </KeyboardAvoidingView>
     </Container>
   );
