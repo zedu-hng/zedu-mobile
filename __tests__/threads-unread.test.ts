@@ -3,19 +3,46 @@ import {
   markThreadAsRead,
   parseOrganisationThreadsResponse,
 } from '../src/services/mentions/parse-organisation-threads';
-import { ThreadListItem } from '../src/types/thread';
+import { ThreadListItem, ThreadMessage } from '../src/types/thread';
+
+const createThreadMessage = (
+  overrides: Partial<ThreadMessage> = {},
+): ThreadMessage => ({
+  thread_id: 'thread-1',
+  channels_id: 'channel-1',
+  org_id: 'org-1',
+  username: 'user',
+  status: 'unread',
+  created_at: '',
+  updated_at: '',
+  message_count: 0,
+  last_reply: '',
+  avatar_url: '',
+  default_avatar_url: '',
+  user_type: 'user',
+  type: 'message',
+  message: '',
+  channel_name: '',
+  channel_type: 'GROUP',
+  current_status: 'unread',
+  full_name: '',
+  email: '',
+  user_id: 'user-1',
+  edited: false,
+  is_pinned: false,
+  messages: [],
+  media: [],
+  pinned_details: {},
+  reactions: null,
+  ...overrides,
+});
 
 const createThread = (
   overrides: Partial<ThreadListItem> = {},
 ): ThreadListItem =>
   ({
     thread_id: 'thread-1',
-    thread_messages: [
-      {
-        current_status: 'unread',
-        status: 'unread',
-      },
-    ],
+    thread_messages: [createThreadMessage()],
     ...overrides,
   } as ThreadListItem);
 
@@ -25,7 +52,12 @@ describe('thread unread state handling', () => {
     expect(isThreadUnread({ current_status: 'unread' })).toBe(true);
     expect(
       isThreadUnread({
-        thread_messages: [{ current_status: 'UNREAD', status: 'unread' }],
+        thread_messages: [
+          createThreadMessage({
+            current_status: 'UNREAD',
+            status: 'unread',
+          }),
+        ],
       }),
     ).toBe(true);
     expect(isThreadUnread({ is_unread: false, unread: true })).toBe(false);

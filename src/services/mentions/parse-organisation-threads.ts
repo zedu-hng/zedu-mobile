@@ -1,4 +1,10 @@
-import { OrganisationThreadsData, ThreadListItem } from '@/types/thread';
+import { ThreadListItem } from '@/types/thread';
+
+type OrganisationThreadsPayload = {
+  threads: ThreadListItem[];
+  unseen_thread_count?: number;
+  unseenThreadCount?: number;
+};
 
 export const isThreadUnread = (
   thread?: Partial<ThreadListItem> | null,
@@ -41,15 +47,27 @@ const normaliseThreadItem = (thread: ThreadListItem): ThreadListItem => ({
 
 export const parseOrganisationThreadsResponse = (
   data:
-    | { data?: OrganisationThreadsData | ThreadListItem[] }
-    | OrganisationThreadsData
+    | { data?: OrganisationThreadsPayload | ThreadListItem[] }
+    | OrganisationThreadsPayload
     | ThreadListItem[]
     | null
     | undefined,
 ): { threads: ThreadListItem[]; unseenThreadCount: number } => {
-  const payload =
-    data && typeof data === 'object' && 'data' in data ? data.data : data;
+  if (!data) {
+    return {
+      threads: [],
+      unseenThreadCount: 0,
+    };
+  }
 
+  if (Array.isArray(data)) {
+    return {
+      threads: data.map(normaliseThreadItem),
+      unseenThreadCount: 0,
+    };
+  }
+
+  const payload = 'threads' in data ? data : data.data;
   if (!payload) {
     return {
       threads: [],
@@ -67,10 +85,6 @@ export const parseOrganisationThreadsResponse = (
   return {
     threads: (payload.threads ?? []).map(normaliseThreadItem),
     unseenThreadCount:
-      payload.unseen_thread_count ??
-      ('unseenThreadCount' in payload
-        ? payload.unseenThreadCount
-        : undefined) ??
-      0,
+      payload.unseen_thread_count ?? payload.unseenThreadCount ?? 0,
   };
 };
