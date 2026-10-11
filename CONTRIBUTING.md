@@ -4,14 +4,14 @@ Zedu Mobile is the React Native app for iOS and Android. This guide covers how w
 
 The short version:
 
-> Approved ticket → ticket branch in your team's fork → test against your team's backend → **one PR** to `zedu-hng/zedu-mobile:dev` → your fork builds it → team lead approves → Zedu reviewers review with that build → squash merge → your team syncs.
+> Approved ticket → ticket branch in your team's fork → test against the dev backend → **one PR** to `zedu-hng/zedu-mobile:dev` → your fork builds it → team lead approves → Zedu reviewers review with that build → squash merge → your team syncs.
 
 ## 1. Ground rules
 
 - **Every change needs an approved ticket** in ClickUp or Linear. Nothing starts from an untracked chat request.
 - **One ticket per PR, one person per PR.** Each member opens their own PR from their own ticket branch. No team branches and no combined PRs: we review and reject per developer, so nobody's work is held up by someone else's. If you find another problem, open another ticket.
-- **Your team lead reviews first.** They approve on your PR, the **Lead approval** check goes green, and Zedu reviewers pick it up after that.
-- **PRs come from your team's org fork.** PRs from personal forks or unregistered orgs fail **Lead approval**.
+- **Your team lead reviews first.** They approve on your PR, the **Lead approved** check goes green, and Zedu reviewers pick it up after that.
+- **PRs come from your team's org fork.** PRs from personal forks or unregistered orgs fail **Lead approved**.
 - **Don't change protected files** (§6) unless a reviewer has agreed it first.
 - **You never push to `zedu-hng` or `zeduchat` directly.** All work happens in your fork and comes in as a PR.
 - **AI is a tool, not an authority.** You own everything you submit. If you can't explain it, don't submit it.
@@ -35,8 +35,8 @@ Fork from **`zedu-hng/zedu-mobile`**, not from `zeduchat`. Otherwise your PRs an
 
 1. Fork `zedu-hng/zedu-mobile` into your team's GitHub org. Not a personal account: the org identifies your team.
 2. In the fork, go to **Actions** and enable workflows. Forks have them off by default, and your PR builds run there.
-3. Register your team: your lead sends a Zedu reviewer the org name and every lead's GitHub handle. Reviewers add them to `.github/teams.yml`. Until then, your PRs fail **Lead approval**.
-4. Point CI at your team's backend: in the fork, go to **Settings → Secrets and variables → Actions → Variables**, and add `APP_ENV_FILE` containing your full `.env` (the keys are listed in `env.d.ts`). CI writes it to `.env` before building. Without it, builds succeed but the app has no backend.
+3. Register your team: your lead sends a Zedu reviewer the org name and every lead's GitHub handle. Reviewers add them to [`teams.yml` in `zedu-hng/zedu-ci`](https://github.com/zedu-hng/zedu-ci/blob/main/teams.yml), one file for every Zedu repo, so a team registered for another repo is already set. Until then, your PRs fail **Lead approved**.
+4. Builds need no configuration: CI points them at the dev backend (§7). An `APP_ENV_FILE` variable left in the fork from earlier isn't read any more; delete it.
 5. Each contributor clones the **team fork**:
 
    ```sh
@@ -45,7 +45,7 @@ Fork from **`zedu-hng/zedu-mobile`**, not from `zeduchat`. Otherwise your PRs an
    npm ci
    ```
 
-6. Create a local `.env` with your team's values, using the same keys as `env.d.ts`. Never commit it.
+6. Create a local `.env` using the same keys as `env.d.ts`, pointed at the dev backend (the values CI uses are in [`build/zedu-mobile.env`](https://github.com/zedu-hng/zedu-ci/blob/main/build/zedu-mobile.env)). Never commit it.
 7. Follow the [React Native environment setup](https://reactnative.dev/docs/set-up-your-environment), then run `npm run android` / `npm run ios` (see README).
 
 `npm ci` installs Husky git hooks. On commit, Prettier, ESLint, TypeScript and lint-staged run, and commitlint checks your message.
@@ -81,7 +81,7 @@ npm test               # Jest
 npm run security:audit
 ```
 
-Build and run the app on at least the platform your change touches: Android via `npm run android`, and iOS via `pod install` + `npm run ios` if you have a Mac. Test against **your team's backend**.
+Build and run the app on at least the platform your change touches: Android via `npm run android`, and iOS via `pod install` + `npm run ios` if you have a Mac. Test against the **dev backend** (`https://api.hng.groups.zedu.chat`), or your team's backend when the ticket needs backend work that isn't on dev yet (§7).
 
 **What tests you need:**
 
@@ -100,20 +100,24 @@ These files are owned by the reviewers. The **Protected files** check fails any 
 - `.github/` (workflows, templates, the review bot config);
 - `AGENTS.md` and `CONTRIBUTING.md`;
 - tooling config: `.eslintrc*`, `.prettierrc*`, `.prettierignore`, `tsconfig.json`, `babel.config.js`, `metro.config.js`, `jest.config.js`, `jest.setup.js`, `commitlint.config*`, `.gitleaks.toml`, `.husky/`, `.npmrc`;
-- Firebase config: `android/app/google-services.json`, `ios/GoogleService-Info.plist`.
+- Firebase config: `android/app/google-services.json`, `ios/GoogleService-Info.plist`;
+- secret-like files anywhere: `.env*` (except `.env.example`), keystores (`.keystore`, `.jks`), certificates and keys (`.p12`, `.pfx`, `.pem`, `.p8`), provisioning profiles, credential or service-account JSON.
 
 Dependency changes (`package.json`, lockfiles) are fine when the ticket needs them. **Moving or restructuring files needs its own approved ticket**; never mix it into feature work.
 
 ## 7. How your PR gets built
 
-Your fork builds your PR, with your fork's `APP_ENV_FILE`, so the build talks to your team's backend. Zedu never holds your config or secrets.
+Your fork builds your PR on its own Actions minutes. Every build talks to the **dev backend**, `https://api.hng.groups.zedu.chat`, so reviewers test every PR against the same backend.
 
-- **Builds run only while your PR is open.** Pushes to a ticket branch without an open PR skip the build. Docs-only pushes never build.
+- **Needs backend work that isn't on dev yet?** Add a line to the PR description, under **Backend**: `Backend URL: https://api.<team>.groups.zedu.chat`. Your build then uses that backend, and the **Backend dependency** check stays red until you delete the line, once the backend change is on dev. Adding, changing or deleting the line after a build makes **Fork build** fail until you re-run PR build in your fork, so the build always matches the description.
+- Nothing secret goes into a build: anything in `.env` ships inside the app.
+
+- **Builds run only while your PR is open.** Pushes to a ticket branch without an open PR skip the build. A PR that only changes Markdown needs no build.
 - **First build:** opening the PR doesn't trigger one. In your fork, go to **Actions → PR build → Run workflow** on your branch, or push a commit. After that, every push builds automatically.
 - On your PR, the **Fork build** check finds that build for your latest commit, waits for it, and posts download links (Android APK, iOS simulator app). Reviewers test with those.
-- After a manual build, **Fork build** updates on its own within 15 minutes; comment `/fork-build` on the PR to check straight away. No build showing at all? Check that Actions is enabled in your fork and that it's synced.
+- After a manual build, **Fork build** picks it up on its own if you start it within half an hour of opening the PR or pushing; otherwise comment `/fork-build` on the PR. No build showing at all? Check that Actions is enabled in your fork and that it's synced.
 
-The other checks (lint, types, tests, security scans, **Branch name**, **Single author**, **Protected files**, **Lead approval**) run on the PR itself. The review bot posts its report as a PR comment. On a first-time contribution, a maintainer has to approve the workflow run before anything runs.
+The other checks (lint, types, tests, security scans, **Branch name**, **Single author**, **Protected files**, **Size**, **PR title**, **PR template**, **Backend dependency**, **Lead approved**) run on the PR itself, each as its own check. The review bot posts its report as a PR comment. On a first-time contribution, a maintainer has to approve the run before lint, tests and the scans start; the other checks run straight away.
 
 ## 8. Open the PR
 
@@ -123,15 +127,14 @@ The other checks (lint, types, tests, security scans, **Branch name**, **Single 
    - what changed and why;
    - how to test and what to expect;
    - your team lead's GitHub handle;
-   - screenshots or a recording for visible changes, on the platforms you changed;
-   - the AI-usage line.
+   - screenshots or a recording for visible changes, on the platforms you changed.
 3. A bot comments with your team and requests review from your lead(s). One of them leaves an **Approve** review.
 4. Run the first build (§7).
 5. Move the ticket to **IN REVIEW**.
 
 ## 9. Review and merge
 
-- **Your team lead approves first.** **Lead approval** goes green once a lead registered for your fork's org approves. It re-checks every 5 minutes. Zedu reviewers only pick up PRs with it green.
+- **Your team lead approves first.** **Lead approved** goes green once a lead registered for your fork's org approves. It re-checks as soon as a lead reviews (on a first-time contribution, once a maintainer has approved the run; until then a periodic re-check covers it). Zedu reviewers only pick up PRs with it green.
 - A lead who opens their own PR needs another lead's approval. A team with one lead is waived and goes straight to Zedu review.
 - If your lead approved somewhere GitHub can't see, a reviewer can add the `lead-verified` label.
 - **1 Zedu reviewer approval** is required, and it must come after your last push.
@@ -159,22 +162,7 @@ Anything in `.env` or compiled into the app is readable by anyone who has the ap
 
 If you expose a secret, deleting it in the next commit is not enough. Tell a reviewer immediately so it can be rotated.
 
-## 11. AI usage
-
-AI is fine for explaining code, drafting implementations, tests, debugging, refactoring and docs.
-
-Don't:
-
-- paste generated code you haven't read;
-- submit code you can't explain;
-- give AI tools secrets or user data;
-- treat AI output as a substitute for testing or review.
-
-For significant AI-assisted changes, add one line to the PR saying how AI was used.
-
-If you use an AI coding agent, point it at `AGENTS.md`. It holds the repo conventions agents need, and most agents load it automatically.
-
-## 12. Definition of done
+## 11. Definition of done
 
 - Acceptance criteria met.
 - All checks green on the PR, including **Fork build**.
@@ -183,7 +171,7 @@ If you use an AI coding agent, point it at `AGENTS.md`. It holds the repo conven
 - Verified on the build.
 - Ticket closed in ClickUp or Linear.
 
-## 13. Getting unstuck
+## 12. Getting unstuck
 
 Ask in your team's channel first, then the project channel. For a blocker, include:
 

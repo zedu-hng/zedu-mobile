@@ -2,7 +2,7 @@
 
 Instructions for AI coding agents working in `zedu-mobile` (React Native 0.83, TypeScript, iOS + Android).
 
-**Read `CONTRIBUTING.md` first.** It is the source of truth for the workflow: tickets, branches, commits, testing, CI tiers, PRs and secrets. This file adds only what an agent needs on top of it. Where the two disagree, `CONTRIBUTING.md` wins. `PRODUCT.md` describes what Zedu is: a chat, channels and calls app for learning communities, not an LMS.
+**Read `CONTRIBUTING.md` first.** It is the source of truth for the workflow: tickets, branches, commits, testing, CI, PRs and secrets. This file adds only what an agent needs on top of it. Where the two disagree, `CONTRIBUTING.md` wins. `PRODUCT.md` describes what Zedu is: a chat, channels and calls app for learning communities, not an LMS.
 
 ## Hard rules
 
@@ -72,4 +72,4 @@ Jest with the `react-native` preset. `jest.setup.js` already stubs native module
 
 ## Commits and PRs
 
-Conventional Commits, enforced by commitlint on every commit and on the PR title. The PR title becomes the squashed commit on `dev`, so make it describe the change. Fill in every section of the PR template, and add the one-line AI-usage note when AI did significant work.
+Conventional Commits, enforced by commitlint on every commit and on the PR title. The PR title becomes the squashed commit on `dev`, so make it describe the change. Fill in every section of the PR template.
