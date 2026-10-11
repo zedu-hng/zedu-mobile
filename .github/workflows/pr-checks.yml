@@ -1,0 +1,34 @@
+name: PR checks
+
+# Caller: the logic lives in zedu-hng/zedu-ci (pr-checks-node.yml), pinned by commit. This file sets the
+# triggers, concurrency and token permissions. Keep the file name: other workflows look it up.
+# Replaces Zedu's PR pre-commit checks, PR Review Bot, Commitlint, and the file-policy, audit,
+# Gitleaks and heuristics parts of Security checks and Malware scan (disabled
+# in zedu-hng; their files stay as upstream). Runs PR code with a read-only token.
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - central-staging
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+permissions: {}
+
+concurrency:
+  group: pr-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: PR checks
+    if: github.repository == 'zedu-hng/zedu-mobile'
+    permissions:
+      contents: read
+    uses: zedu-hng/zedu-ci/.github/workflows/pr-checks-node.yml@fac7608447c2fd4f4b85e8b5c295a754bbf1d40a
+    with:
+      jest: true
