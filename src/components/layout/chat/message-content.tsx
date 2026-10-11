@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+﻿import React, { useCallback, useMemo, useState } from 'react';
 import {
   Linking,
   StyleProp,
@@ -32,7 +32,7 @@ type MessageContentProps = {
   containerStyle?: StyleProp<ViewStyle>;
   /** Extra text styles merged into the message body (e.g. bubble padding). */
   textStyle?: StyleProp<TextStyle>;
-  /** Attachment file links — excluded from URL previews / opened as documents. */
+  /** Attachment file links â€” excluded from URL previews / opened as documents. */
   media?: Array<{ file_link?: string; file_name?: string; name?: string }>;
   /** Hide OG link previews (e.g. compact forward snippets). */
   showLinkPreviews?: boolean;
@@ -46,7 +46,7 @@ type InlineSegment = Exclude<
 /**
  * Renders TipTap / mobile message HTML with native text marks so bold,
  * italic, strike, lists, code, links, and mentions match web formatting.
- * Avoids HTML→markdown (`**bold**`) which often leaves asterisks visible.
+ * Avoids HTMLâ†’markdown (`**bold**`) which often leaves asterisks visible.
  */
 export const MessageContent: React.FC<MessageContentProps> = ({
   html,
@@ -104,12 +104,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
   const openExternalLink = useCallback(async (url: string) => {
     const href = ensureHttpsUrl(url);
     try {
-      const supported = await Linking.canOpenURL(href);
-      if (supported) {
-        await Linking.openURL(href);
-      } else {
-        ShowNotify('Error', "Don't know how to open this URL: " + href);
-      }
+      await Linking.openURL(href);
     } catch {
       ShowNotify('Error', 'An error occurred while opening the link');
     }
@@ -282,7 +277,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                       : styles.bullet_list_icon
                   }
                 >
-                  {block.segment.ordered ? `${itemIndex + 1}.` : '•'}
+                  {block.segment.ordered ? `${itemIndex + 1}.` : 'â€¢'}
                 </Text>
                 <Text style={[styles.text, { flex: 1 }]}>
                   {renderInline(
