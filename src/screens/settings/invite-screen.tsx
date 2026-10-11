@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -37,6 +37,8 @@ const InvitePeopleScreen = ({ navigation }: any) => {
   const [roleId, setRoleId] = useState<string>('');
   const [generatedLink, setGeneratedLink] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const generateRequestId = useRef(0);
+  const inFlightGenerations = useRef(0);
 
   useEffect(() => {
     const getRoles = async () => {
@@ -85,8 +87,19 @@ const InvitePeopleScreen = ({ navigation }: any) => {
     setEmails(newEmails);
   };
 
+  const isShareDisabled = !generatedLink || isGenerating;
+
+  const handleSelectRole = (id: string) => {
+    if (id === roleId) return;
+    generateRequestId.current += 1;
+    setGeneratedLink('');
+    setIsGenerating(inFlightGenerations.current > 0);
+    setRoleId(id);
+  };
+
   const handleShare = async () => {
-    const linkToShare = generatedLink || ``;
+    if (!generatedLink || isGenerating) return;
+    const linkToShare = generatedLink;
     try {
       await Share.share({
         message: `Join our workspace on Zedu: ${linkToShare}`,
@@ -120,6 +133,9 @@ const InvitePeopleScreen = ({ navigation }: any) => {
   const handleCopyInviteLink = async () => {
     if (!orgId || !roleId) return;
 
+    const requestId = generateRequestId.current + 1;
+    generateRequestId.current = requestId;
+    inFlightGenerations.current += 1;
     setIsGenerating(true);
     const payload = {
       organisation_id: orgId,
@@ -127,6 +143,12 @@ const InvitePeopleScreen = ({ navigation }: any) => {
     };
 
     const { data, error } = await PostRequest('/invite/general', payload);
+
+    inFlightGenerations.current = Math.max(0, inFlightGenerations.current - 1);
+    if (requestId !== generateRequestId.current) {
+      setIsGenerating(inFlightGenerations.current > 0);
+      return;
+    }
 
     if (!error && data?.data?.invitation_link) {
       const baseUrl = CLIENT_URL;
@@ -228,7 +250,7 @@ const InvitePeopleScreen = ({ navigation }: any) => {
                 {roles.map(role => (
                   <TouchableOpacity
                     key={role.id}
-                    onPress={() => setRoleId(role.id)}
+                    onPress={() => handleSelectRole(role.id)}
                     style={[
                       styles.roleChip,
                       roleId === role.id && styles.roleChipActive,
@@ -283,7 +305,11 @@ const InvitePeopleScreen = ({ navigation }: any) => {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.shareOption} onPress={handleShare}>
+            <TouchableOpacity
+              style={[styles.shareOption, isShareDisabled && { opacity: 0.5 }]}
+              onPress={handleShare}
+              disabled={isShareDisabled}
+            >
               <View style={styles.shareIconCircle}>
                 <Feather name="share-2" size={20} color={colors.primary} />
               </View>
