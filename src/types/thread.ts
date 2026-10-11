@@ -101,10 +101,14 @@ export type ThreadListItem = {
   sender_avatar_url: string;
   sender_default_avatar_url: string;
   channel_type: ChannelType;
+  is_unread?: boolean;
+  unread?: boolean;
+  current_status?: string;
 };
 
 export type OrganisationThreadsData = {
   unseen_thread_count: number;
+  unseenThreadCount?: number;
   threads: ThreadListItem[];
 };
 

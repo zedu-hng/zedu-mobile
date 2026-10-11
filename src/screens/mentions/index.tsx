@@ -24,6 +24,10 @@ import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5';
 import { ACTIONS } from '@/store/types';
 import ChatSkeleton from '@/components/skeleton/chat-skeleton';
 import { UserAvatar } from '../channels/user-avatar';
+import {
+  isThreadUnread,
+  markThreadAsRead,
+} from '@/services/mentions/parse-organisation-threads';
 
 type MentionNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -48,6 +52,27 @@ const MentionsScreen = () => {
     const threadMsg = mention.thread_messages?.[0];
     if (!threadMsg) return;
 
+    const storedMention = (state.mentionsList || []).find(
+      item => String(item.thread_id) === String(mention.thread_id),
+    );
+    const wasUnread = isThreadUnread(storedMention);
+
+    if (storedMention && wasUnread) {
+      dispatch({
+        type: ACTIONS.MENTIONS_LIST,
+        payload: (state.mentionsList || []).map(item =>
+          String(item.thread_id) === String(mention.thread_id)
+            ? markThreadAsRead(item)
+            : item,
+        ),
+      });
+      dispatch({
+        type: ACTIONS.UNSEEN_THREAD_COUNT,
+        payload: Math.max(0, (state.unseenThreadCount || 0) - 1),
+      });
+    }
+
+    const readMention = markThreadAsRead(mention);
     dispatch({ type: ACTIONS.SELECTED_MSG, payload: threadMsg });
 
     dispatch({
@@ -63,7 +88,7 @@ const MentionsScreen = () => {
       params: {
         thread_id: threadMsg.thread_id,
         channel_id: threadMsg.channels_id,
-        mention: threadMsg,
+        mention: readMention,
       },
     });
 
@@ -77,10 +102,11 @@ const MentionsScreen = () => {
     const showLock = channelType === 'private';
     const lastMessage = item.thread_messages?.[0];
     const showAvatar = isDM || isGroupDM;
+    const unread = isThreadUnread(item);
 
     return (
       <TouchableOpacity
-        style={styles.chatItem}
+        style={[styles.chatItem, unread && styles.chatItemUnread]}
         onPress={() => handleMentionPress(item)}
       >
         <View style={styles.avatarWrapper}>
@@ -105,11 +131,14 @@ const MentionsScreen = () => {
               variant="bold"
               size={14}
               numberOfLines={1}
-              style={styles.chatName}
+              style={[styles.chatName, unread && styles.chatNameUnread]}
             >
               {item.channel_name}
             </AppText>
-            <AppText size={12} style={styles.chatTime}>
+            <AppText
+              size={12}
+              style={[styles.chatTime, unread && styles.chatTimeUnread]}
+            >
               {lastMessage?.last_reply
                 ? moment(lastMessage.last_reply).format('h:mm a')
                 : lastMessage?.created_at
@@ -118,14 +147,16 @@ const MentionsScreen = () => {
             </AppText>
           </View>
           <View style={styles.chatFooterRow}>
-            <AppText size={14} numberOfLines={1} style={styles.chatMsg}>
+            <AppText
+              size={14}
+              numberOfLines={1}
+              style={[styles.chatMsg, unread && styles.chatMsgUnread]}
+            >
               {item.previe_message
                 ? item.previe_message.replace(/<[^>]*>?/gm, '')
                 : ''}
             </AppText>
-            {/* {lastMessage?.message_count > 0 && (
-                            <View style={styles.countBadge} />
-                        )} */}
+            {unread && <View style={styles.unreadDot} />}
           </View>
         </View>
       </TouchableOpacity>

@@ -279,6 +279,30 @@ export function createMentionListStyles(colors: ThemeColors) {
       color: colors.messageMeta,
       flex: 1,
     },
+    chatItemUnread: {
+      backgroundColor: colors.surfaceElevated,
+      borderLeftWidth: 2,
+      borderLeftColor: colors.primary,
+      paddingLeft: normalize(14),
+    },
+    chatNameUnread: {
+      color: colors.textPrimary,
+      fontWeight: '700',
+    },
+    chatTimeUnread: {
+      color: colors.primary,
+    },
+    chatMsgUnread: {
+      color: colors.textPrimary,
+      fontWeight: '600',
+    },
+    unreadDot: {
+      width: normalize(8),
+      height: normalize(8),
+      borderRadius: normalize(4),
+      backgroundColor: colors.primary,
+      marginLeft: normalize(8),
+    },
     listContent: {
       flexGrow: 1,
     },

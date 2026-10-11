@@ -31,6 +31,10 @@ import ThreadMessageItem from '@/components/layout/channels/thread-message-item'
 import { ShowNotify } from '@/components/ui/toast';
 import uuid from 'react-native-uuid';
 import ChatBackground from '@/components/layout/chat/chat-background';
+import {
+  isThreadUnread,
+  markThreadAsRead,
+} from '@/services/mentions/parse-organisation-threads';
 
 const MentionThreadScreen = ({ navigation, route }: any) => {
   const { colors } = useTheme();
@@ -55,6 +59,33 @@ const MentionThreadScreen = ({ navigation, route }: any) => {
     channel: _channel,
   } = state;
   const { thread_id, channel_id, mention } = route.params;
+
+  React.useEffect(() => {
+    if (!mention?.thread_id) return;
+
+    const storedMention = (state.mentionsList || []).find(
+      item => String(item.thread_id) === String(mention.thread_id),
+    );
+    if (!storedMention || !isThreadUnread(storedMention)) return;
+
+    dispatch({
+      type: ACTIONS.MENTIONS_LIST,
+      payload: (state.mentionsList || []).map(item =>
+        String(item.thread_id) === String(mention.thread_id)
+          ? markThreadAsRead(item)
+          : item,
+      ),
+    });
+    dispatch({
+      type: ACTIONS.UNSEEN_THREAD_COUNT,
+      payload: Math.max(0, (state.unseenThreadCount || 0) - 1),
+    });
+  }, [
+    mention?.thread_id,
+    dispatch,
+    state.mentionsList,
+    state.unseenThreadCount,
+  ]);
 
   const { loadMore, isFetchingMore } = UseReplyChat({
     channel_id: channel_id as string,
