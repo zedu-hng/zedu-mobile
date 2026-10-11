@@ -23,11 +23,18 @@ export function createChatListStyles(colors: ThemeColors) {
       borderRadius: normalize(8),
       paddingHorizontal: normalize(12),
     },
+    conversationSearchBar: {
+      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+      borderRadius: normalize(20),
+    },
     searchIcon: {
       width: 18,
       height: 18,
       tintColor: colors.white,
       marginRight: 8,
+    },
+    conversationSearchIcon: {
+      tintColor: 'rgba(255, 255, 255, 0.9)',
     },
     searchInput: {
       flex: 1,

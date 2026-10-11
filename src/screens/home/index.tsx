@@ -178,14 +178,14 @@ const HomeScreen = () => {
           <UserAvatarWithStatus user={user} />
         </View>
 
-        <View style={styles.searchBar}>
+        <View style={[styles.searchBar, styles.conversationSearchBar]}>
           <Image
             source={require('@/assets/icons/search.png')}
-            style={styles.searchIcon}
+            style={[styles.searchIcon, styles.conversationSearchIcon]}
           />
           <TextInput
             placeholder="Find a conversation"
-            placeholderTextColor={colors.white}
+            placeholderTextColor="rgba(255, 255, 255, 0.88)"
             style={styles.searchInput}
             value={search}
             onChangeText={setSearch}
