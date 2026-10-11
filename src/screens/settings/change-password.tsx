@@ -97,7 +97,7 @@ const ChangePasswordScreen = ({ navigation }: any) => {
         >
           <View style={{ marginTop: 10 }}>
             <AppInput
-              label="Old Password"
+              label="Current Password"
               value={passwords.oldPassword}
               onChangeText={val => updateField('oldPassword', val)}
               placeholder="********"
@@ -113,7 +113,7 @@ const ChangePasswordScreen = ({ navigation }: any) => {
             />
 
             <AppInput
-              label="Confirm Password"
+              label="Confirm new password"
               value={passwords.confirmPassword}
               onChangeText={val => updateField('confirmPassword', val)}
               placeholder="********"
@@ -121,7 +121,7 @@ const ChangePasswordScreen = ({ navigation }: any) => {
             />
 
             <AppText style={styles.noteText}>
-              Note: You would need to login again to effect this change.
+              Note: You would need to log in again to effect this change.
             </AppText>
           </View>
         </ScrollView>
