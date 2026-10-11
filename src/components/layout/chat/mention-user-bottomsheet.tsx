@@ -23,9 +23,13 @@ import { PostRequest } from '@/utils/requests';
 import FastImage from 'react-native-fast-image';
 
 export interface MentionUserBottomSheetRef {
-  open: (user: Participant) => void;
+  open: (user: Participant, destination: UserProfileDestination) => void;
   close: () => void;
 }
+
+export type UserProfileDestination =
+  | { type: 'channel'; channelId: string }
+  | { type: 'group'; channelId: string };
 
 const MentionUserBottomSheet = forwardRef<MentionUserBottomSheetRef, {}>(
   (props, ref) => {
@@ -41,22 +45,50 @@ const MentionUserBottomSheet = forwardRef<MentionUserBottomSheetRef, {}>(
           borderWidth: 1,
           borderColor: colors.border,
         },
+        actionGrid: {
+          ...createMentionSheetStyles(colors).actionGrid,
+          marginTop: 36,
+        },
+        statusTextContainer: {
+          flex: 1,
+          position: 'relative' as const,
+        },
         statusText: {
           fontSize: 14,
           color: colors.messageMeta,
+          lineHeight: 18,
+        },
+        showFullAction: {
+          position: 'absolute' as const,
+          right: 0,
+          bottom: 0,
+          paddingLeft: 4,
+          backgroundColor: colors.surfaceElevated,
+        },
+        showFullText: {
+          fontSize: 12,
+          color: colors.primary,
         },
       }),
       [colors],
     );
     const [user, setUser] = useState<Participant | null>(null);
     const [loading, setLoading] = useState(false);
+    const [overflowingStatus, setOverflowingStatus] = useState<string | null>(
+      null,
+    );
+    const [profileDestination, setProfileDestination] =
+      useState<UserProfileDestination | null>(null);
     const bottomSheetRef = useRef<AppBottomSheetRef>(null);
     const { state, dispatch } = useDataContext();
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+    const statusMessage = user?.text || 'Available';
+    const statusHasOverflow = overflowingStatus === statusMessage;
 
     useImperativeHandle(ref, () => ({
-      open: (user: Participant) => {
+      open: (user: Participant, destination: UserProfileDestination) => {
         setUser(user);
+        setProfileDestination(destination);
         bottomSheetRef.current?.expand();
       },
       close: () => {
@@ -109,6 +141,32 @@ const MentionUserBottomSheet = forwardRef<MentionUserBottomSheetRef, {}>(
       setLoading(false);
     };
 
+    const handleShowFullStatus = () => {
+      if (!user || !profileDestination) {
+        return;
+      }
+
+      bottomSheetRef.current?.close();
+      if (profileDestination.type === 'channel') {
+        navigation.navigate('ChannelStack', {
+          screen: 'UserDetails',
+          params: {
+            participant: user,
+            channel_id: profileDestination.channelId,
+          },
+        });
+        return;
+      }
+
+      navigation.navigate('ChatStack', {
+        screen: 'GroupUserDetailScreen',
+        params: {
+          participant: user,
+          channel_id: profileDestination.channelId,
+        },
+      });
+    };
+
     return (
       <AppBottomSheet
         ref={bottomSheetRef}
@@ -150,9 +208,31 @@ const MentionUserBottomSheet = forwardRef<MentionUserBottomSheetRef, {}>(
                 <AppText style={styles.statusEmoji}>
                   {user?.icon || '💬'}
                 </AppText>
-                <AppText style={styles.statusText} numberOfLines={1}>
-                  {user?.text || 'Available'}
-                </AppText>
+                <View style={styles.statusTextContainer}>
+                  <AppText
+                    style={styles.statusText}
+                    numberOfLines={2}
+                    onTextLayout={event => {
+                      setOverflowingStatus(
+                        event.nativeEvent.lines.length > 2
+                          ? statusMessage
+                          : null,
+                      );
+                    }}
+                  >
+                    {statusMessage}
+                  </AppText>
+                  {statusHasOverflow && (
+                    <TouchableOpacity
+                      accessibilityRole="button"
+                      accessibilityLabel="Show full profile"
+                      onPress={handleShowFullStatus}
+                      style={styles.showFullAction}
+                    >
+                      <AppText style={styles.showFullText}>… Show full</AppText>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
 
               <View style={styles.actionGrid}>

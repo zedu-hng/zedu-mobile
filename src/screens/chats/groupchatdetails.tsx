@@ -135,7 +135,10 @@ const GroupChatDetailScreen = ({ navigation, route }: any) => {
     if (!participant || !Array.isArray(participant)) return;
     const found = participant.find((p: any) => p.user_id === userId);
     if (found) {
-      mentionUserSheetRef.current?.open(found);
+      mentionUserSheetRef.current?.open(found, {
+        type: 'group',
+        channelId: channel_id,
+      });
     }
   };
 
