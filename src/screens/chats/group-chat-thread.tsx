@@ -202,7 +202,10 @@ const GroupChatThreadScreen = ({ navigation, route }: any) => {
     const found = participant.find((p: any) => p.user_id === userId);
 
     if (found) {
-      mentionUserSheetRef.current?.open(found);
+      mentionUserSheetRef.current?.open(found, {
+        type: 'group',
+        channelId: channel_id,
+      });
     }
   };
 

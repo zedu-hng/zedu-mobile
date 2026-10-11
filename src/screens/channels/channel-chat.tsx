@@ -140,7 +140,10 @@ const ChannelChatScreen = ({ navigation, route }: any) => {
       (p: any) => p.user_id === userId,
     );
     if (found) {
-      mentionUserSheetRef.current?.open(found);
+      mentionUserSheetRef.current?.open(found, {
+        type: 'channel',
+        channelId: channel_id,
+      });
     }
   };
 
