@@ -105,7 +105,10 @@ const InvitePeopleScreen = ({ navigation }: any) => {
     });
 
     if (!error) {
-      ShowNotify(data?.message || `Invites sent successfully`, 'success');
+      ShowNotify(
+        'Invites sent',
+        data?.message || 'Your invites have been sent.',
+      );
 
       // Clear the fields
       setEmails([]);
@@ -134,7 +137,7 @@ const InvitePeopleScreen = ({ navigation }: any) => {
 
       setGeneratedLink(link);
       Clipboard.setString(link);
-      ShowNotify('Invite link copied to clipboard!', 'success');
+      ShowNotify('Link copied', 'Invite link copied to clipboard.');
     } else {
       dispatch({
         type: ACTIONS.ERROR,
