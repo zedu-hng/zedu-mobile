@@ -38,7 +38,6 @@ const InvitePeopleScreen = ({ navigation }: any) => {
   const [generatedLink, setGeneratedLink] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const generateRequestId = useRef(0);
-  const inFlightGenerations = useRef(0);
 
   useEffect(() => {
     const getRoles = async () => {
@@ -91,9 +90,11 @@ const InvitePeopleScreen = ({ navigation }: any) => {
 
   const handleSelectRole = (id: string) => {
     if (id === roleId) return;
+    // Invalidate any in-flight generation so its response cannot touch
+    // state, and unblock generation for the newly selected role immediately.
     generateRequestId.current += 1;
     setGeneratedLink('');
-    setIsGenerating(inFlightGenerations.current > 0);
+    setIsGenerating(false);
     setRoleId(id);
   };
 
@@ -135,7 +136,6 @@ const InvitePeopleScreen = ({ navigation }: any) => {
 
     const requestId = generateRequestId.current + 1;
     generateRequestId.current = requestId;
-    inFlightGenerations.current += 1;
     setIsGenerating(true);
     const payload = {
       organisation_id: orgId,
@@ -144,9 +144,10 @@ const InvitePeopleScreen = ({ navigation }: any) => {
 
     const { data, error } = await PostRequest('/invite/general', payload);
 
-    inFlightGenerations.current = Math.max(0, inFlightGenerations.current - 1);
+    // An outdated request (the role changed or a newer request started)
+    // must not touch the link, loading state, or error state; the latest
+    // request owns them.
     if (requestId !== generateRequestId.current) {
-      setIsGenerating(inFlightGenerations.current > 0);
       return;
     }
 

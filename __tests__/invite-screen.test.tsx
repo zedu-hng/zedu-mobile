@@ -291,3 +291,171 @@ test('an outdated response cannot restore a link after role change', async () =>
   });
   expect(staleNodes.length).toBe(0);
 });
+
+test('switching roles while generation is pending re-enables generation for the new role', async () => {
+  const renderer = await renderScreen();
+  let resolveFirst: (value: any) => void = () => undefined;
+  mockedPostRequest.mockReturnValueOnce(
+    new Promise(resolve => {
+      resolveFirst = resolve;
+    }),
+  );
+
+  const generateButton = findTouchable(renderer.root, 'Generate') as any;
+
+  let firstGeneration: Promise<void> | undefined;
+  await act(async () => {
+    firstGeneration = generateButton.props.onPress() as Promise<void>;
+    await flushPromises();
+  });
+  expect(mockedPostRequest).toHaveBeenCalledTimes(1);
+
+  const adminChip = findTouchable(renderer.root, 'Admin') as any;
+  await act(async () => {
+    adminChip.props.onPress();
+    await flushPromises();
+  });
+
+  // The Generate button must be usable immediately: no spinner is rendered
+  // while the outdated request is still pending.
+  const generateAgain = findTouchable(renderer.root, 'Generate') as any;
+
+  let resolveSecond: (value: any) => void = () => undefined;
+  mockedPostRequest.mockReturnValueOnce(
+    new Promise(resolve => {
+      resolveSecond = resolve;
+    }),
+  );
+
+  let secondGeneration: Promise<void> | undefined;
+  await act(async () => {
+    secondGeneration = generateAgain.props.onPress() as Promise<void>;
+    await flushPromises();
+  });
+
+  expect(mockedPostRequest).toHaveBeenCalledTimes(2);
+  expect(mockedPostRequest.mock.calls[1][1]).toEqual({
+    organisation_id: 'org-1',
+    role_id: 'role-admin',
+  });
+
+  // The outdated response arrives while the new request is still pending:
+  // it must not clear the current loading state or show a stale link.
+  await act(async () => {
+    resolveFirst({
+      data: { data: { invitation_link: 'invite/stale' } },
+      error: null,
+    });
+    await firstGeneration;
+    await flushPromises();
+  });
+
+  expect(findShareButton(renderer.root).props.disabled).toBe(true);
+  const staleNodes = renderer.root.findAll(node => {
+    try {
+      return (
+        typeof node.props?.children === 'string' &&
+        (node.props.children as string).includes('invite/stale')
+      );
+    } catch {
+      return false;
+    }
+  });
+  expect(staleNodes.length).toBe(0);
+
+  // The latest request controls the loading state and delivers the link.
+  await act(async () => {
+    resolveSecond({
+      data: { data: { invitation_link: 'invite/admin-link' } },
+      error: null,
+    });
+    await secondGeneration;
+    await flushPromises();
+  });
+
+  expect(findShareButton(renderer.root).props.disabled).toBe(false);
+  const freshNodes = renderer.root.findAll(node => {
+    try {
+      return (
+        typeof node.props?.children === 'string' &&
+        (node.props.children as string).includes('invite/admin-link')
+      );
+    } catch {
+      return false;
+    }
+  });
+  expect(freshNodes.length).toBeGreaterThan(0);
+});
+
+test('an outdated response completing after the current one cannot overwrite the link', async () => {
+  const renderer = await renderScreen();
+  let resolveFirst: (value: any) => void = () => undefined;
+  let resolveSecond: (value: any) => void = () => undefined;
+  mockedPostRequest
+    .mockReturnValueOnce(
+      new Promise(resolve => {
+        resolveFirst = resolve;
+      }),
+    )
+    .mockReturnValueOnce(
+      new Promise(resolve => {
+        resolveSecond = resolve;
+      }),
+    );
+
+  const generateButton = findTouchable(renderer.root, 'Generate') as any;
+
+  let firstGeneration: Promise<void> | undefined;
+  await act(async () => {
+    firstGeneration = generateButton.props.onPress() as Promise<void>;
+    await flushPromises();
+  });
+
+  // Invalidate the first request by switching roles, then generate again.
+  const adminChip = findTouchable(renderer.root, 'Admin') as any;
+  await act(async () => {
+    adminChip.props.onPress();
+    await flushPromises();
+  });
+
+  const generateAgain = findTouchable(renderer.root, 'Generate') as any;
+  let secondGeneration: Promise<void> | undefined;
+  await act(async () => {
+    secondGeneration = generateAgain.props.onPress() as Promise<void>;
+    await flushPromises();
+  });
+
+  // The current request completes first and enables sharing.
+  await act(async () => {
+    resolveSecond({
+      data: { data: { invitation_link: 'invite/current' } },
+      error: null,
+    });
+    await secondGeneration;
+    await flushPromises();
+  });
+
+  expect(findShareButton(renderer.root).props.disabled).toBe(false);
+
+  // The outdated response arrives last and must change nothing.
+  await act(async () => {
+    resolveFirst({
+      data: { data: { invitation_link: 'invite/stale' } },
+      error: null,
+    });
+    await firstGeneration;
+    await flushPromises();
+  });
+
+  const shareButton = findShareButton(renderer.root);
+  expect(shareButton.props.disabled).toBe(false);
+
+  await act(async () => {
+    shareButton.props.onPress();
+    await flushPromises();
+  });
+
+  expect(mockedShare).toHaveBeenCalledTimes(1);
+  expect(mockedShare.mock.calls[0][0].message).toContain('invite/current');
+  expect(mockedShare.mock.calls[0][0].message).not.toContain('invite/stale');
+});
