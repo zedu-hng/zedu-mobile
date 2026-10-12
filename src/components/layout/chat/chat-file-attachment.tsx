@@ -219,11 +219,13 @@ export function ChatFileAttachmentCard({
   file,
   fallbackSize,
   onPress,
+  onLongPress,
   widthRatio = 0.72,
 }: {
   file: FileLike;
   fallbackSize?: string;
   onPress?: () => void;
+  onLongPress?: () => void;
   widthRatio?: number;
 }) {
   const { colors } = useTheme();
@@ -239,6 +241,7 @@ export function ChatFileAttachmentCard({
     <TouchableOpacity
       activeOpacity={0.85}
       onPress={onPress}
+      onLongPress={onLongPress}
       style={[stylesThemed.card, { width: width * widthRatio }]}
     >
       <FileAttachmentPreviewPanel fileName={displayName} size="message" />
