@@ -1,0 +1,75 @@
+import { useEffect, useState } from 'react';
+import { GetRequest } from '@/utils/requests';
+import { extractMessageUrls } from '@/utils/link-preview';
+
+export type ChannelLinkItem = {
+  url: string;
+  created_at: string;
+  thread_id: string;
+};
+
+type ChannelThreadItem = {
+  thread_id: string;
+  message?: string;
+  created_at?: string;
+};
+
+type ChannelThreadsResponse = {
+  data: ChannelThreadItem[];
+};
+
+export const useChannelLinks = (channelId?: string, enabled = false) => {
+  const [links, setLinks] = useState<ChannelLinkItem[]>([]);
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!enabled || !channelId) return;
+    let cancelled = false;
+    const load = async () => {
+      setError(null);
+      const { data: response, error: fetchError } =
+        await GetRequest<ChannelThreadsResponse>(
+          `/threads/channels/${channelId}?page=1&limit=50`,
+        );
+      if (cancelled) return;
+      if (fetchError || !response) {
+        setLinks([]);
+        setError(fetchError || 'Failed to load links');
+      } else {
+        const threads = Array.isArray(response.data) ? response.data : [];
+        const byUrl = new Map<string, ChannelLinkItem>();
+
+        threads.forEach(thread => {
+          const urls = extractMessageUrls(thread.message || '');
+          const createdAt = thread.created_at || '';
+          urls.forEach(url => {
+            const key = url.replace(/\/$/, '').toLowerCase();
+            const existing = byUrl.get(key);
+            if (!existing || createdAt > existing.created_at) {
+              byUrl.set(key, {
+                url,
+                created_at: createdAt,
+                thread_id: thread.thread_id,
+              });
+            }
+          });
+        });
+
+        setLinks(
+          Array.from(byUrl.values()).sort((a, b) =>
+            b.created_at.localeCompare(a.created_at),
+          ),
+        );
+      }
+      setLoadedFor(channelId);
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [channelId, enabled]);
+
+  const loading = enabled && !!channelId && loadedFor !== channelId;
+  return { links, loading, error };
+};
