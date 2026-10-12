@@ -1,7 +1,6 @@
 import React, { useRef, useState, useMemo } from 'react';
 import {
   View,
-  Image,
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
@@ -20,6 +19,7 @@ import FastImage from 'react-native-fast-image';
 import BuzzService from '@/services/buzz.service';
 import { ShowNotify } from '@/components/ui/toast';
 import Container from '@/components/layout/container';
+import ProfilePicturePreview from '@/components/ui/profile-picture-preview';
 
 const DmDetailsScreen = ({ navigation, route }: any) => {
   const { colors } = useTheme();
@@ -162,11 +162,12 @@ const DmDetailsScreen = ({ navigation, route }: any) => {
       <ScrollView showsVerticalScrollIndicator={false} bounces={true}>
         <View style={styles.profileHero}>
           <View style={styles.mainAvatarContainer}>
-            <Image
+            <ProfilePicturePreview
               source={{
                 uri: userData?.avatar_url || userData?.default_avatar_url,
               }}
-              style={styles.mainAvatar}
+              previewUri={userData?.avatar_url || userData?.default_avatar_url}
+              imageStyle={styles.mainAvatar}
             />
             <View
               style={[

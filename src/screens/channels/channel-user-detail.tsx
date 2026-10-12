@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
-import { View, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, TouchableOpacity, ScrollView } from 'react-native';
 import { AppText } from '@/components/ui/text';
 import { useTheme } from '@/theme/ThemeProvider';
 import { createChatInfoStyles } from '@/theme/createScreenStyles';
@@ -11,6 +11,7 @@ import { ACTIONS } from '@/store/types';
 import { UserProfileStatus } from '@/components/ui/user-profile-status';
 import { ContactInfoCard } from '@/components/ui/contact-info-card';
 import Container from '@/components/layout/container';
+import ProfilePicturePreview from '@/components/ui/profile-picture-preview';
 
 const ChannelUserDetailScreen = ({ navigation, route }: any) => {
   const { colors } = useTheme();
@@ -145,19 +146,15 @@ const ChannelUserDetailScreen = ({ navigation, route }: any) => {
       <ScrollView showsVerticalScrollIndicator={false} bounces={true}>
         <View style={styles.profileHero}>
           <View style={styles.mainAvatarContainer}>
-            {userData?.avatar_url || userData?.default_avatar_url ? (
-              <Image
-                source={{
-                  uri: userData.avatar_url || userData.default_avatar_url,
-                }}
-                style={styles.mainAvatar}
-              />
-            ) : (
-              <Image
-                source={require('@/assets/images/user.png')}
-                style={styles.mainAvatar}
-              />
-            )}
+            <ProfilePicturePreview
+              source={
+                userData?.avatar_url || userData?.default_avatar_url
+                  ? { uri: userData.avatar_url || userData.default_avatar_url }
+                  : require('@/assets/images/user.png')
+              }
+              previewUri={userData?.avatar_url || userData?.default_avatar_url}
+              imageStyle={styles.mainAvatar}
+            />
             <View
               style={[
                 styles.onlineStatus,
