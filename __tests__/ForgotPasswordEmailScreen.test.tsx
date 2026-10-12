@@ -169,6 +169,60 @@ describe('ForgotPasswordEmailScreen', () => {
     });
   });
 
+  test('rejects an email with an empty domain label', async () => {
+    let renderer!: ReactTestRenderer.ReactTestRenderer;
+
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(<ForgotPasswordEmailScreen />);
+    });
+
+    await ReactTestRenderer.act(() => {
+      renderer.root
+        .findByProps({ testID: 'email-input' })
+        .props.onChangeText('user@.com');
+    });
+
+    await ReactTestRenderer.act(() => {
+      renderer.root.findByProps({ testID: 'submit-button' }).props.onPress();
+    });
+
+    expect(PostRequest).not.toHaveBeenCalled();
+    expect(
+      renderer.root.findByProps({ testID: 'email-error' }).props.children,
+    ).toBe('Enter a valid email address.');
+
+    await ReactTestRenderer.act(() => {
+      renderer.unmount();
+    });
+  });
+
+  test('rejects an email with consecutive domain dots', async () => {
+    let renderer!: ReactTestRenderer.ReactTestRenderer;
+
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(<ForgotPasswordEmailScreen />);
+    });
+
+    await ReactTestRenderer.act(() => {
+      renderer.root
+        .findByProps({ testID: 'email-input' })
+        .props.onChangeText('user@example..com');
+    });
+
+    await ReactTestRenderer.act(() => {
+      renderer.root.findByProps({ testID: 'submit-button' }).props.onPress();
+    });
+
+    expect(PostRequest).not.toHaveBeenCalled();
+    expect(
+      renderer.root.findByProps({ testID: 'email-error' }).props.children,
+    ).toBe('Enter a valid email address.');
+
+    await ReactTestRenderer.act(() => {
+      renderer.unmount();
+    });
+  });
+
   test('submits a valid trimmed email', async () => {
     (PostRequest as jest.Mock).mockResolvedValue({
       data: { message: 'Reset email sent' },

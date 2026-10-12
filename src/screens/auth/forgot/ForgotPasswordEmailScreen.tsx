@@ -12,7 +12,7 @@ import { ACTIONS } from '@/store/types';
 import { useTheme } from '@/theme/ThemeProvider';
 import { createAuthStyles } from '@/theme/createScreenStyles';
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
 
 const ForgotPasswordEmailScreen: React.FC = () => {
   const { colors } = useTheme();
@@ -86,6 +86,7 @@ const ForgotPasswordEmailScreen: React.FC = () => {
         <AppText variant="bold" size={23} style={styles.titleCompact}>
           Forgot password
         </AppText>
+
         <AppText size={18} style={styles.subtitle}>
           Enter the email you used in creating your account, we will send you
           instructions on how to reset your password.
@@ -101,12 +102,14 @@ const ForgotPasswordEmailScreen: React.FC = () => {
           autoCapitalize="none"
           style={styles.input}
         />
+
         <AppButton
           title="Submit"
           onPress={handleSubmit}
           loading={loading}
           style={styles.submitBtn}
         />
+
         <AppButton
           title="Back to Login"
           onPress={() => navigation.goBack()}
