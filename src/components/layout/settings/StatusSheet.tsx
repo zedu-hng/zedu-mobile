@@ -297,6 +297,7 @@ const StatusSheet = forwardRef<AppBottomSheetRef, Props>(
           enableRecentlyUsed
           categoryPosition="bottom"
           disableSafeArea
+          enableSearchBar
         />
       </>
     );
