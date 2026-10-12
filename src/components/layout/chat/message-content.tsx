@@ -277,7 +277,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                       : styles.bullet_list_icon
                   }
                 >
-                  {block.segment.ordered ? `${itemIndex + 1}.` : 'â€¢'}
+                  {block.segment.ordered ? `${itemIndex + 1}.` : '•'}
                 </Text>
                 <Text style={[styles.text, { flex: 1 }]}>
                   {renderInline(
