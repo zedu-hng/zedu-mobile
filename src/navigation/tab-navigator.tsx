@@ -266,11 +266,18 @@ const TabNavigator = ({
         tabBarLabelStyle: tabStyles.tabBarLabel,
         tabBarIcon: ({ focused }: any) => {
           let iconSource;
-          const iconStyle = {
+          const iconStyle: any = {
             width: normalize(24),
             height: normalize(24),
-            tintColor: focused ? colors.primary : colors.textSecondary,
           };
+
+          // Settings ships its own colour, so it must not be tinted.
+          // Every other tab keeps the theme tint.
+          if (route.name !== 'Settings') {
+            iconStyle.tintColor = focused
+              ? colors.primary
+              : colors.textSecondary;
+          }
 
           if (route.name === 'Chats')
             iconSource = require('@/assets/tabs/chats.png');
