@@ -1,7 +1,6 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import {
   View,
-  Image,
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
@@ -18,6 +17,7 @@ import { UserProfileStatus } from '@/components/ui/user-profile-status';
 import { ContactInfoCard } from '@/components/ui/contact-info-card';
 import UseGroupDetails from '@/services/chat/group-details';
 import Container from '@/components/layout/container';
+import ProfilePicturePreview from '@/components/ui/profile-picture-preview';
 
 const GroupUserDetailScreen = ({ navigation, route }: any) => {
   const { colors } = useTheme();
@@ -119,11 +119,12 @@ const GroupUserDetailScreen = ({ navigation, route }: any) => {
       <ScrollView showsVerticalScrollIndicator={false} bounces={true}>
         <View style={styles.profileHero}>
           <View style={styles.mainAvatarContainer}>
-            <Image
+            <ProfilePicturePreview
               source={{
                 uri: userData?.avatar_url || userData?.default_avatar_url,
               }}
-              style={styles.mainAvatar}
+              previewUri={userData?.avatar_url || userData?.default_avatar_url}
+              imageStyle={styles.mainAvatar}
             />
             <View
               style={[

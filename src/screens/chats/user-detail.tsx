@@ -1,7 +1,6 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import {
   View,
-  Image,
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
@@ -21,6 +20,7 @@ import BuzzService from '@/services/buzz.service';
 import buzzService from '@/services/buzz.service';
 import { UserProfileStatus } from '@/components/ui/user-profile-status';
 import { ContactInfoCard } from '@/components/ui/contact-info-card';
+import ProfilePicturePreview from '@/components/ui/profile-picture-preview';
 
 const getFileExtension = (fileName: string): string => {
   if (!fileName) return '';
@@ -199,11 +199,12 @@ const UserDetailScreen = ({ navigation, route }: any) => {
       <ScrollView showsVerticalScrollIndicator={false} bounces={true}>
         <View style={styles.profileHero}>
           <View style={styles.mainAvatarContainer}>
-            <Image
+            <ProfilePicturePreview
               source={{
                 uri: userData?.avatar_url || userData?.default_avatar_url,
               }}
-              style={styles.mainAvatar}
+              previewUri={userData?.avatar_url || userData?.default_avatar_url}
+              imageStyle={styles.mainAvatar}
             />
             <View
               style={[
