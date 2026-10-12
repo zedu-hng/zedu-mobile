@@ -27,6 +27,7 @@ export const useOrgBuzzes = ({
   const [error, setError] = useState<string | null>(null);
 
   const buzzesRef = useRef<OrgBuzz[]>([]);
+  const loadingMoreRef = useRef(false);
   useEffect(() => {
     buzzesRef.current = buzzes;
   }, [buzzes]);
@@ -36,9 +37,10 @@ export const useOrgBuzzes = ({
       if (isInitial) {
         setLoading(true);
       } else {
-        if (loadingMore || !hasMore) {
+        if (loadingMoreRef.current || loadingMore || !hasMore) {
           return;
         }
+        loadingMoreRef.current = true;
         setLoadingMore(true);
       }
 
@@ -98,6 +100,7 @@ export const useOrgBuzzes = ({
 
       setLoading(false);
       setLoadingMore(false);
+      loadingMoreRef.current = false;
     },
     [filter, hasMore, loadingMore, page, search],
   );
@@ -115,10 +118,10 @@ export const useOrgBuzzes = ({
   }, [fetchBuzzes]);
 
   const loadMore = useCallback(() => {
-    if (!loading && !loadingMore && hasMore && buzzes.length >= PAGE_LIMIT) {
+    if (!loading && !loadingMore && hasMore) {
       fetchBuzzes(false);
     }
-  }, [buzzes.length, fetchBuzzes, hasMore, loading, loadingMore]);
+  }, [fetchBuzzes, hasMore, loading, loadingMore]);
 
   return {
     buzzes,
