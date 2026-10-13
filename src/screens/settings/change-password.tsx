@@ -33,9 +33,15 @@ const ChangePasswordScreen = ({ navigation }: any) => {
     setPasswords(prev => ({ ...prev, [field]: value }));
   };
 
+  // Compared while typing so a mismatch shows under the field instead of after Save.
+  const hasConfirmed = passwords.confirmPassword.length > 0;
+  const passwordsMatch =
+    hasConfirmed && passwords.newPassword === passwords.confirmPassword;
+
+  const isFormValid = Boolean(passwords.oldPassword) && passwordsMatch;
+
   const handleSave = async () => {
-    if (passwords.newPassword !== passwords.confirmPassword) {
-      dispatch({ type: ACTIONS.ERROR, payload: 'Passwords do not match' });
+    if (!isFormValid) {
       return;
     }
 
@@ -61,9 +67,6 @@ const ChangePasswordScreen = ({ navigation }: any) => {
       setIsSaving(false);
     }
   };
-
-  const isFormValid =
-    passwords.oldPassword && passwords.newPassword && passwords.confirmPassword;
 
   return (
     <Container>
@@ -118,11 +121,29 @@ const ChangePasswordScreen = ({ navigation }: any) => {
               onChangeText={val => updateField('confirmPassword', val)}
               placeholder="********"
               secureTextEntry
+              error={
+                hasConfirmed && !passwordsMatch
+                  ? "Passwords don't match"
+                  : undefined
+              }
+              style={passwordsMatch ? styles.passwordMatchInput : undefined}
             />
 
-            <AppText style={styles.noteText}>
-              Note: You would need to login again to effect this change.
-            </AppText>
+            {passwordsMatch && (
+              <AppText size={12} style={styles.passwordMatchText}>
+                ✓ Passwords match
+              </AppText>
+            )}
+
+            <View style={styles.noteBox}>
+              <Image
+                source={require('@/assets/icons/info-circle.png')}
+                style={styles.noteIcon}
+              />
+              <AppText style={[styles.noteText, styles.noteBoxText]}>
+                Note: You would need to login again to effect this change.
+              </AppText>
+            </View>
           </View>
         </ScrollView>
 
