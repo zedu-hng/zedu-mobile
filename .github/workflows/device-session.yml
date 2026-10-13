@@ -1,0 +1,41 @@
+name: Device session
+
+# Caller for zedu-ci's device-session.yml. A reviewer's `/test android` comment on a PR starts a session
+# on the PR's own Android build, an emulator streamed to a browser (zedu-ci devices/README.md);
+# `/test extend` adds 15 minutes and `/test stop` ends it. The logic is in zedu-ci, pinned by commit.
+# Trusted: runs in this repo with its own token and never checks out PR code.
+# Needs the repo secret DEVICE_TOKEN (the slot's bearer token).
+# required_statuses are the commit statuses that must be green before a session starts.
+
+on:
+  issue_comment:
+    types:
+      - created
+
+permissions:
+  contents: read
+
+concurrency:
+  group: device-session-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  session:
+    name: Device session
+    if: >-
+      github.repository == 'zedu-hng/zedu-mobile' && github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/test')
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+      statuses: read
+    uses: zedu-hng/zedu-ci/.github/workflows/device-session.yml@181371c60af0e32605794c6f0c4520f1ef739271
+    with:
+      platform: android
+      slot_url: https://android.preview.groups.zedu.chat
+      artifact: android-apk
+      tarball: app-release.apk
+      required_statuses: Fork build,File policy,Gitleaks,Malware heuristics,ClamAV,Obfuscation scan
+    secrets:
+      DEVICE_TOKEN: ${{ secrets.DEVICE_TOKEN }}
