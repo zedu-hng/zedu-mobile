@@ -93,6 +93,7 @@ const ThreadMessageItem = ({
           key={mediaItem.id}
           activeOpacity={0.9}
           onPress={() => handleMediaPress(mediaItem)}
+          onLongPress={() => handlePress(item)}
           style={styles.mediaContainer}
         >
           <FastImage
@@ -109,6 +110,7 @@ const ThreadMessageItem = ({
           key={mediaItem.id}
           activeOpacity={0.9}
           onPress={() => handleMediaPress(mediaItem)}
+          onLongPress={() => handlePress(item)}
           style={styles.mediaContainer}
         >
           <View style={styles.videoWrapper}>
