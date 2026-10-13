@@ -153,7 +153,7 @@ describe('MediaGalleryScreen empty state', () => {
         {
           id: 'file-1',
           file_name: 'notes.pdf',
-          file_link: 'https://example.com/notes.pdf',
+          file_link: 'https://zedu.chat/files/notes.pdf',
           file_type: 'pdf',
           mime_type: 'application/pdf',
         },
