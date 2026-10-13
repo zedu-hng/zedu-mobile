@@ -35,7 +35,6 @@ const ChangePasswordScreen = ({ navigation }: any) => {
     setPasswords(prev => ({ ...prev, [field]: value }));
   };
 
-  // Compared while typing so a mismatch shows under the field instead of after Save.
   const hasConfirmed = passwords.confirmPassword.length > 0;
   const passwordsMatch =
     hasConfirmed && passwords.newPassword === passwords.confirmPassword;
