@@ -9,7 +9,7 @@ The short version:
 ## 1. Ground rules
 
 - **Every change needs an approved ticket** in ClickUp or Linear. Nothing starts from an untracked chat request.
-- **One ticket per PR, one person per PR.** Each member opens their own PR from their own ticket branch. No team branches and no combined PRs: we review and reject per developer, so nobody's work is held up by someone else's. If you find another problem, open another ticket.
+- **Team PRs are allowed.** A team can consolidate several members' work into one PR from its fork. The **Single author**, **Branch name** and **Size** checks are switched off for now: they still report, as passed, and can be switched back on. For a consolidated PR, put the main ticket in the branch and in the title and list the other tickets in the description. The earlier rule is kept for when it returns: *one ticket per PR, one person per PR. Each member opens their own PR from their own ticket branch, with no team branches and no combined PRs, so nobody's work is held up by someone else's. If you find another problem, open another ticket.*
 - **Your team lead reviews first.** They approve on your PR, the **Lead approved** check goes green, and Zedu reviewers pick it up after that.
 - **PRs come from your team's org fork.** PRs from personal forks or unregistered orgs fail **Lead approved**.
 - **Don't change protected files** (§6) unless a reviewer has agreed it first.
@@ -60,10 +60,10 @@ Fork from **`zedu-hng/zedu-mobile`**, not from `zeduchat`. Otherwise your PRs an
    <type>/<ticket-id>-<short-description>
    ```
 
-   Types: `feat`, `fix`, `test`, `docs`, `refactor`, `chore`, `perf`, `security`. Example: `fix/245-android-crash-on-resume`.
+   Types: `feat`, `fix`, `test`, `docs`, `refactor`, `chore`, `perf`, `security`. Example: `fix/245-android-crash-on-resume`. The **Branch name** check that enforces this format is switched off for now; a consolidated PR can use any branch name.
 
 4. Commit with [Conventional Commits](https://www.conventionalcommits.org/): `feat: add offline quiz caching`, `fix: handle expired auth token`. Commitlint rejects `update`, `changes`, `final`, and friends. The PR title must pass commitlint too, and it becomes the squashed commit message.
-5. Commit only as yourself. The **Single author** check fails a PR with commits from more than one person. If you commit from several emails (work laptop, personal), add all of them to your GitHub account (**Settings → Emails**), or they count as different authors. Credit a collaborator with a `Co-authored-by:` trailer instead.
+5. Commit only as yourself. The **Single author** check, which is switched off for now (a team PR may hold several people's commits), fails a PR with commits from more than one person when it is on. If you commit from several emails (work laptop, personal), add all of them to your GitHub account (**Settings → Emails**), or they count as different authors. Credit a collaborator with a `Co-authored-by:` trailer instead.
 
 **Dependent tickets:** if ticket B needs ticket A, open B's PR after A merges, then update B from `dev`. Don't stack B on top of A's unmerged branch.
 
