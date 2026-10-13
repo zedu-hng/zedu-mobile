@@ -60,7 +60,7 @@ Fork from **`zedu-hng/zedu-mobile`**, not from `zeduchat`. Otherwise your PRs an
    <type>/<ticket-id>-<short-description>
    ```
 
-   Types: `feat`, `fix`, `test`, `docs`, `refactor`, `chore`, `perf`, `security`. Example: `fix/245-android-crash-on-resume`. The **Branch name** check that enforces this format is switched off for now; a consolidated PR can use any branch name.
+   Types: `feat`, `fix`, `test`, `docs`, `refactor`, `chore`, `perf`, `security`. Example: `fix/245-android-crash-on-resume`. The **Branch name** check that enforces this format is switched off for now: a consolidated PR may use any branch format, but should still include the main ticket ID.
 
 4. Commit with [Conventional Commits](https://www.conventionalcommits.org/): `feat: add offline quiz caching`, `fix: handle expired auth token`. Commitlint rejects `update`, `changes`, `final`, and friends. The PR title must pass commitlint too, and it becomes the squashed commit message.
 5. Commit only as yourself. The **Single author** check, which is switched off for now (a team PR may hold several people's commits), fails a PR with commits from more than one person when it is on. If you commit from several emails (work laptop, personal), add all of them to your GitHub account (**Settings → Emails**), or they count as different authors. Credit a collaborator with a `Co-authored-by:` trailer instead.
