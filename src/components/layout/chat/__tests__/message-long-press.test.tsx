@@ -93,7 +93,7 @@ jest.mock('@/components/layout/channels/channel-event-message-block', () => ({
 jest.mock('@/components/ui/bottom-sheet', () => {
   const mockReact = require('react');
   const calls: any[] = [];
-  const Sheet = mockReact.forwardRef((props: any) => {
+  const Sheet = mockReact.forwardRef((props: any, _ref: any) => {
     calls.push(props);
     return null;
   });
