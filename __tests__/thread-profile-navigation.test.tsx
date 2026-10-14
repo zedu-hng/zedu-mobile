@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity } from 'react-native';
+import { Image, TouchableOpacity } from 'react-native';
 import renderer, { act } from 'react-test-renderer';
 import ThreadItem from '@/components/layout/channels/thread-item';
 import ThreadMessageItem from '@/components/layout/channels/thread-message-item';
@@ -55,11 +55,14 @@ jest.mock('@/components/layout/chat/reaction-details', () => ({
 
 jest.mock('react-native-fast-image', () => ({
   __esModule: true,
-  default: (props: any) => {
-    const ReactModule = require('react');
-    const Native = require('react-native');
-    return ReactModule.createElement(Native.View, props);
-  },
+  default: Object.assign(
+    (props: any) => {
+      const ReactModule = require('react');
+      const Native = require('react-native');
+      return ReactModule.createElement(Native.Image, props);
+    },
+    { resizeMode: { cover: 'cover' } },
+  ),
 }));
 
 jest.mock('react-native-video', () => ({
@@ -245,6 +248,65 @@ describe('thread profile navigation', () => {
     expect(onMentionUser).toHaveBeenCalledWith(message.user_id);
     act(() => username.props.onLongPress());
     expect(onLongPress).toHaveBeenCalledWith(message);
+    act(() => tree.unmount());
+  });
+
+  it('uses the default avatar URL when the message avatar URL is empty', () => {
+    const { tree } = renderProfilePressTargets(
+      <ThreadMessageItem
+        item={{
+          ...message,
+          avatar_url: '',
+          default_avatar_url: 'https://example.test/default.png',
+        }}
+        index={0}
+        messages={[message]}
+        onLongPress={jest.fn()}
+        onMentionUser={jest.fn()}
+        onOpenProfile={jest.fn()}
+      />,
+    );
+
+    const avatar = tree.root.findByType(Image);
+    expect(avatar.props.source).toEqual({
+      uri: 'https://example.test/default.png',
+    });
+    act(() => tree.unmount());
+  });
+
+  it('falls back to the bundled avatar when the remote avatar cannot load', () => {
+    const { tree } = renderProfilePressTargets(
+      <ThreadMessageItem
+        item={message}
+        index={0}
+        messages={[message]}
+        onLongPress={jest.fn()}
+        onMentionUser={jest.fn()}
+        onOpenProfile={jest.fn()}
+      />,
+    );
+
+    const avatar = tree.root.findByType(Image);
+    expect(avatar.props.source).toEqual({ uri: message.avatar_url });
+    act(() => avatar.props.onError());
+    expect(avatar.props.source).toBe(require('@/assets/images/avatar.png'));
+    act(() => tree.unmount());
+  });
+
+  it('uses the bundled avatar when the message has no avatar URLs', () => {
+    const { tree } = renderProfilePressTargets(
+      <ThreadMessageItem
+        item={{ ...message, avatar_url: '', default_avatar_url: '' }}
+        index={0}
+        messages={[message]}
+        onLongPress={jest.fn()}
+        onMentionUser={jest.fn()}
+        onOpenProfile={jest.fn()}
+      />,
+    );
+
+    const avatar = tree.root.findByType(Image);
+    expect(avatar.props.source).toBe(require('@/assets/images/avatar.png'));
     act(() => tree.unmount());
   });
 
