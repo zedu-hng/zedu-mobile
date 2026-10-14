@@ -16,6 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import CountryPicker, {
   Country,
   CountryCode,
+  Flag,
 } from 'react-native-country-picker-modal';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PostRequest, PutRequest } from '@/utils/requests';
@@ -166,20 +167,23 @@ const AddOrganisationScreen = () => {
               onPress={() => setShowCountryPicker(true)}
               activeOpacity={0.8}
             >
-              <AppText
-                size={15}
-                style={
-                  country
-                    ? styles.countrySelectorText
-                    : styles.countrySelectorPlaceholder
-                }
-              >
-                {country
-                  ? typeof country.name === 'string'
-                    ? country.name
-                    : country.name.common
-                  : 'Select an option...'}
-              </AppText>
+              <View style={styles.countrySelectorContent}>
+                {country && <Flag countryCode={countryCode} flagSize={20} />}
+                <AppText
+                  size={15}
+                  style={
+                    country
+                      ? styles.countrySelectorText
+                      : styles.countrySelectorPlaceholder
+                  }
+                >
+                  {country
+                    ? typeof country.name === 'string'
+                      ? country.name
+                      : country.name.common
+                    : 'Select an option...'}
+                </AppText>
+              </View>
               <Ionicons
                 name="chevron-down"
                 size={20}
@@ -192,6 +196,7 @@ const AddOrganisationScreen = () => {
               visible={showCountryPicker}
               withFilter
               withFlag
+              withFlagButton={false}
               withCountryNameButton={false}
               withAlphaFilter
               onSelect={onSelect}

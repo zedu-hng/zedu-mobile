@@ -1178,6 +1178,12 @@ export function createOrgScreenStyles(colors: ThemeColors) {
     countrySelectorPlaceholder: {
       color: colors.textMuted,
     },
+    countrySelectorContent: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
     input: {
       height: 52,
       borderRadius: 8,
