@@ -114,6 +114,7 @@ describe('MentionUserBottomSheet status', () => {
     );
     await act(() => showFullAction.props.onPress());
 
+    expect(showFullAction.findByType(Text).props.children).toBe('… Show full');
     expect(mockNavigate).toHaveBeenCalledWith('ChannelStack', {
       screen: 'UserDetails',
       params: {
