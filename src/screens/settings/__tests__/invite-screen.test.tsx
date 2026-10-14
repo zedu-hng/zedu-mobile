@@ -5,26 +5,26 @@
 import React from 'react';
 import { Share } from 'react-native';
 import ReactTestRenderer, { act } from 'react-test-renderer';
-import InvitePeopleScreen from '../src/screens/settings/invite-screen';
-import { GetRequest, PostRequest } from '../src/utils/requests';
+import InvitePeopleScreen from '../invite-screen';
+import { GetRequest, PostRequest } from '../../../utils/requests';
 // The dotenv babel plugin inlines this at transform time (exactly as it does
 // in the screen), so the expectation tracks the value the code under test got.
 import { CLIENT_URL } from '@env';
 
-jest.mock('../src/utils/requests', () => ({
+jest.mock('../../../utils/requests', () => ({
   GetRequest: jest.fn(),
   PostRequest: jest.fn(),
 }));
 
-jest.mock('../src/store/useDataContext', () => ({
+jest.mock('../../../store/useDataContext', () => ({
   useDataContext: () => ({
     state: { orgId: 'org-1', orgData: {} },
     dispatch: jest.fn(),
   }),
 }));
 
-jest.mock('../src/theme/ThemeProvider', () => {
-  const actual = jest.requireActual('../src/theme/ThemeProvider');
+jest.mock('../../../theme/ThemeProvider', () => {
+  const actual = jest.requireActual('../../../theme/ThemeProvider');
   return {
     ...actual,
     useTheme: () => ({
@@ -42,7 +42,7 @@ jest.mock('../src/theme/ThemeProvider', () => {
   };
 });
 
-jest.mock('../src/components/layout/container', () => {
+jest.mock('../../../components/layout/container', () => {
   const React = require('react');
   const { View } = require('react-native');
   return {
@@ -51,7 +51,7 @@ jest.mock('../src/components/layout/container', () => {
   };
 });
 
-jest.mock('../src/components/ui/toast', () => ({
+jest.mock('../../../components/ui/toast', () => ({
   ShowNotify: jest.fn(),
 }));
 
