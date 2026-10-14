@@ -56,7 +56,7 @@ const DmDetailsScreen = ({ navigation, route }: any) => {
 
     setCallLoading(true);
     try {
-      const result = await BuzzService.createBuzz();
+      const result = await BuzzService.directBuzzCall(channel_id);
 
       if (result.error || !result.data) {
         ShowNotify('Error', result.error || 'Failed to create call');
