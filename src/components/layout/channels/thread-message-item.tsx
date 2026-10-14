@@ -17,6 +17,7 @@ import { isVideoFile } from '@/utils/file-helpers';
 import { isVoiceMessageMedia } from '@/utils/voice-message';
 import { AudioMessagePlayer } from '../chat/audio-message-player';
 import ReactionDetailsSheet from '../chat/reaction-details';
+import { getThreadMessageAvatarUrl } from '@/utils/thread-message-avatar';
 
 interface ThreadMessageItemProps {
   item: any;
@@ -47,6 +48,9 @@ const ThreadMessageItem = ({
   const [selectedReactionEmoji, setSelectedReactionEmoji] = useState<
     string | null
   >(null);
+  const avatarUrl = getThreadMessageAvatarUrl(item);
+  const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | undefined>();
+  const useFallbackAvatar = !avatarUrl || failedAvatarUrl === avatarUrl;
 
   let showDateHeader = false;
   try {
@@ -213,8 +217,14 @@ const ThreadMessageItem = ({
           delayLongPress={200}
         >
           <FastImage
-            source={{ uri: item.avatar_url || item.default_avatar_url }}
+            source={
+              useFallbackAvatar
+                ? require('@/assets/images/avatar.png')
+                : { uri: avatarUrl }
+            }
             style={styles.groupSenderAvatar}
+            resizeMode={FastImage.resizeMode.cover}
+            onError={() => setFailedAvatarUrl(avatarUrl)}
           />
         </TouchableOpacity>
 
