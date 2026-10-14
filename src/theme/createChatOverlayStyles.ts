@@ -662,6 +662,7 @@ export function createThreadItemStyles(colors: ThemeColors) {
       borderWidth: 2,
       borderColor: colors.primary,
     },
+    senderNameTouchable: { flex: 1, minWidth: 0, marginRight: 4 },
     senderNameLabel: { paddingHorizontal: 8, paddingTop: 4, paddingBottom: 2 },
     senderRow: {
       flexDirection: 'row',

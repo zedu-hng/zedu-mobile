@@ -11,7 +11,7 @@ import { useTyping } from '@/hooks/useTyping';
 import { MediaPickerSheet } from '@/components/layout/chat/media-picker';
 import MediaEditorModal from '@/components/layout/chat/media-editor';
 import ThreadItem from '@/components/layout/channels/thread-item';
-import { Channel } from '@/types/channel';
+import { Channel, ChannelChat } from '@/types/channel';
 import { useDataContext } from '@/store/useDataContext';
 import UseReplyChat from '@/services/channels/use-reply';
 import { ACTIONS } from '@/store/types';
@@ -28,6 +28,7 @@ import ChatBackground from '@/components/layout/chat/chat-background';
 import { ShowNotify } from '@/components/ui/toast';
 import uuid from 'react-native-uuid';
 import ThreadScreenHeader from '@/components/layout/chat/thread-screen-header';
+import { navigateToThreadProfile } from '@/navigation/thread-profile-navigation';
 
 const ChatThreadScreen = ({ navigation, route }: any) => {
   const { colors } = useTheme();
@@ -202,6 +203,13 @@ const ChatThreadScreen = ({ navigation, route }: any) => {
     setSelectedMsg(item);
   };
 
+  const handleOpenProfile = (item: ChannelChat) => {
+    navigateToThreadProfile(navigation, item, channel_id, {
+      container: 'chat',
+      conversationType: chatType,
+    });
+  };
+
   return (
     <Container color={colors.topNavigation}>
       <ReplyConnection id={thread_id as string} />
@@ -234,9 +242,15 @@ const ChatThreadScreen = ({ navigation, route }: any) => {
             messages={replyChat}
             inverted={true}
             onLongPress={() => handleLongPress(item)}
+            onOpenProfile={handleOpenProfile}
           />
         )}
-        ListFooterComponent={<ThreadItem item={selectedMessage} />}
+        ListFooterComponent={
+          <ThreadItem
+            item={selectedMessage}
+            onOpenProfile={handleOpenProfile}
+          />
+        }
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         onEndReached={loadMore}

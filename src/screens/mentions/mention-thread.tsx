@@ -31,6 +31,11 @@ import ThreadMessageItem from '@/components/layout/channels/thread-message-item'
 import { ShowNotify } from '@/components/ui/toast';
 import uuid from 'react-native-uuid';
 import ChatBackground from '@/components/layout/chat/chat-background';
+import { ChannelChat } from '@/types/channel';
+import {
+  getMentionConversationType,
+  navigateToThreadProfile,
+} from '@/navigation/thread-profile-navigation';
 
 const MentionThreadScreen = ({ navigation, route }: any) => {
   const { colors } = useTheme();
@@ -191,6 +196,13 @@ const MentionThreadScreen = ({ navigation, route }: any) => {
     setSelectedMsg(item);
   };
 
+  const handleOpenProfile = (item: ChannelChat) => {
+    navigateToThreadProfile(navigation, item, channel_id, {
+      container: 'root',
+      conversationType: getMentionConversationType(mention?.channel_type),
+    });
+  };
+
   return (
     <Container color={colors.topNavigation}>
       <ReplyConnection id={thread_id as string} />
@@ -234,9 +246,15 @@ const MentionThreadScreen = ({ navigation, route }: any) => {
             messages={replyChat}
             inverted={true}
             onLongPress={() => handleLongPress(item)}
+            onOpenProfile={handleOpenProfile}
           />
         )}
-        ListFooterComponent={<ThreadItem item={selectedMessage} />}
+        ListFooterComponent={
+          <ThreadItem
+            item={selectedMessage}
+            onOpenProfile={handleOpenProfile}
+          />
+        }
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         onEndReached={loadMore}

@@ -11,7 +11,7 @@ import { useTyping } from '@/hooks/useTyping';
 import { MediaPickerSheet } from '@/components/layout/chat/media-picker';
 import MediaEditorModal from '@/components/layout/chat/media-editor';
 import ThreadItem from '@/components/layout/channels/thread-item';
-import { Channel } from '@/types/channel';
+import { Channel, ChannelChat } from '@/types/channel';
 import { useDataContext } from '@/store/useDataContext';
 import UseReplyChat from '@/services/channels/use-reply';
 import { ACTIONS } from '@/store/types';
@@ -206,6 +206,13 @@ const GroupChatThreadScreen = ({ navigation, route }: any) => {
     }
   };
 
+  const handleOpenProfile = (item: ChannelChat) => {
+    navigation.navigate('GroupUserDetailScreen', {
+      participant: item,
+      channel_id,
+    });
+  };
+
   return (
     <Container color={colors.topNavigation}>
       <ReplyConnection id={thread_id as string} />
@@ -236,12 +243,14 @@ const GroupChatThreadScreen = ({ navigation, route }: any) => {
             inverted={true}
             onLongPress={() => handleLongPress(item)}
             onMentionUser={handleMentionUser}
+            onOpenProfile={handleOpenProfile}
           />
         )}
         ListFooterComponent={
           <ThreadItem
             item={selectedMessage}
             onMentionUser={handleMentionUser}
+            onOpenProfile={handleOpenProfile}
           />
         }
         contentContainerStyle={styles.listContent}

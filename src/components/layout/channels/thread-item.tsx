@@ -16,7 +16,17 @@ import { isVoiceMessageMedia } from '@/utils/voice-message';
 import { isVideoFile } from '@/utils/file-helpers';
 import moment from 'moment';
 
-const ThreadItem = ({ item, onMentionUser }: any) => {
+interface ThreadItemProps {
+  item: any;
+  onMentionUser?: (userId: string) => void;
+  onOpenProfile: (item: any) => void;
+}
+
+const ThreadItem = ({
+  item,
+  onMentionUser,
+  onOpenProfile,
+}: ThreadItemProps) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createThreadItemStyles(colors), [colors]);
   const [viewerVisible, setViewerVisible] = useState(false);
@@ -36,6 +46,9 @@ const ThreadItem = ({ item, onMentionUser }: any) => {
     setSelectedMedia(media);
     setViewerVisible(true);
   };
+
+  const handleOpenProfile = () => onOpenProfile(item);
+  const handleMentionUser = () => onMentionUser?.(item.user_id);
 
   const renderMediaItem = (mediaItem: any) => {
     const type = mediaItem?.file_type?.toLowerCase();
@@ -134,7 +147,18 @@ const ThreadItem = ({ item, onMentionUser }: any) => {
       <UserStatusIcon user={item} style={styles.threadStatusIcon} />
       <TouchableOpacity
         style={styles.groupAvatarContainer}
-        onPress={() => onMentionUser?.(item.user_id)}
+        activeOpacity={0.8}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel={`Open ${
+          item.username || item.full_name || 'user'
+        }'s profile`}
+        accessibilityHint={
+          onMentionUser ? 'Long press to mention this user' : undefined
+        }
+        onPress={handleOpenProfile}
+        onLongPress={onMentionUser ? handleMentionUser : undefined}
+        delayLongPress={200}
       >
         <FastImage
           source={{ uri: item.avatar_url || item.default_avatar_url }}
@@ -146,22 +170,30 @@ const ThreadItem = ({ item, onMentionUser }: any) => {
         <TouchableOpacity activeOpacity={0.8} style={styles.messageWrapper}>
           <View style={{ width: '100%', minWidth: 0 }}>
             <View style={styles.senderRow}>
-              <AppText
-                size={13}
-                variant="bold"
-                numberOfLines={1}
-                style={[
-                  styles.senderNameLabel,
-                  {
-                    color: item.senderColor || colors.primary,
-                    flex: 1,
-                    minWidth: 0,
-                    marginRight: 4,
-                  },
-                ]}
+              <TouchableOpacity
+                activeOpacity={0.8}
+                hitSlop={4}
+                accessibilityRole="button"
+                accessibilityLabel={`Open ${item.username}'s profile`}
+                onPress={handleOpenProfile}
+                style={styles.senderNameTouchable}
               >
-                {truncateUsernameForChannel(item.username)}
-              </AppText>
+                <AppText
+                  size={13}
+                  variant="bold"
+                  numberOfLines={1}
+                  style={[
+                    styles.senderNameLabel,
+                    {
+                      color: item.senderColor || colors.primary,
+                      flex: 1,
+                      minWidth: 0,
+                    },
+                  ]}
+                >
+                  {truncateUsernameForChannel(item.username)}
+                </AppText>
+              </TouchableOpacity>
               <AppText size={10} style={styles.timeText}>
                 {moment(item.created_at).calendar(null, {
                   sameDay: '[Today]',

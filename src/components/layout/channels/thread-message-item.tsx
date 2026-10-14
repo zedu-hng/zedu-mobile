@@ -18,15 +18,27 @@ import { isVoiceMessageMedia } from '@/utils/voice-message';
 import { AudioMessagePlayer } from '../chat/audio-message-player';
 import ReactionDetailsSheet from '../chat/reaction-details';
 
+interface ThreadMessageItemProps {
+  item: any;
+  index: number;
+  messages: any[];
+  onLongPress: (item: ChannelChat) => void;
+  onMentionUser?: (userId: string) => void;
+  onOpenProfile: (item: ChannelChat) => void;
+  isGroup?: boolean;
+  inverted?: boolean;
+}
+
 const ThreadMessageItem = ({
   item,
   index,
   messages,
   onLongPress,
   onMentionUser,
+  onOpenProfile,
   isGroup,
   inverted = false,
-}: any) => {
+}: ThreadMessageItemProps) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createThreadItemStyles(colors), [colors]);
   const [viewerVisible, setViewerVisible] = useState(false);
@@ -76,6 +88,9 @@ const ThreadMessageItem = ({
     if (item?.type === 'system') return;
     onLongPress(item);
   };
+
+  const handleOpenProfile = () => onOpenProfile(item);
+  const handleMentionUser = () => onMentionUser?.(item.user_id);
 
   const renderMediaItem = (mediaItem: any) => {
     const type = mediaItem?.file_type?.toLowerCase();
@@ -184,7 +199,18 @@ const ThreadMessageItem = ({
         <UserStatusIcon user={item} style={styles.threadStatusIcon} />
         <TouchableOpacity
           style={styles.groupAvatarContainer}
-          onPress={() => onMentionUser?.(item.user_id)}
+          activeOpacity={0.8}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={`Open ${
+            item.username || item.full_name || 'user'
+          }'s profile`}
+          accessibilityHint={
+            onMentionUser ? 'Long press to mention this user' : undefined
+          }
+          onPress={handleOpenProfile}
+          onLongPress={onMentionUser ? handleMentionUser : undefined}
+          delayLongPress={200}
         >
           <FastImage
             source={{ uri: item.avatar_url || item.default_avatar_url }}
@@ -201,19 +227,29 @@ const ThreadMessageItem = ({
           >
             <View style={{ width: '100%', minWidth: 0 }}>
               <View style={styles.senderRow}>
-                <AppText
-                  size={13}
-                  variant="bold"
-                  numberOfLines={1}
-                  style={{
-                    color: item.senderColor || colors.primary,
-                    flex: 1,
-                    minWidth: 0,
-                    marginRight: 4,
-                  }}
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  hitSlop={4}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open ${item.username}'s profile`}
+                  onPress={handleOpenProfile}
+                  onLongPress={() => handlePress(item)}
+                  delayLongPress={200}
+                  style={styles.senderNameTouchable}
                 >
-                  {truncateUsernameForChannel(item.username)}
-                </AppText>
+                  <AppText
+                    size={13}
+                    variant="bold"
+                    numberOfLines={1}
+                    style={{
+                      color: item.senderColor || colors.primary,
+                      flex: 1,
+                      minWidth: 0,
+                    }}
+                  >
+                    {truncateUsernameForChannel(item.username)}
+                  </AppText>
+                </TouchableOpacity>
                 <AppText size={10} style={styles.timeText}>
                   {moment(item.created_at).format('h:mm a')}
                 </AppText>
