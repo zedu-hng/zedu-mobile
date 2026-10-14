@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -37,6 +37,17 @@ const InvitePeopleScreen = ({ navigation }: any) => {
   const [roleId, setRoleId] = useState<string>('');
   const [generatedLink, setGeneratedLink] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const inviteRequestVersion = useRef(0);
+
+  const handleRoleChange = (nextRoleId: string) => {
+    if (nextRoleId === roleId) return;
+
+    // Invalidate pending requests, including when switching away and back.
+    inviteRequestVersion.current += 1;
+    setRoleId(nextRoleId);
+    setGeneratedLink('');
+    setIsGenerating(false);
+  };
 
   useEffect(() => {
     const getRoles = async () => {
@@ -86,10 +97,10 @@ const InvitePeopleScreen = ({ navigation }: any) => {
   };
 
   const handleShare = async () => {
-    const linkToShare = generatedLink || ``;
+    if (!generatedLink) return;
     try {
       await Share.share({
-        message: `Join our workspace on Zedu: ${linkToShare}`,
+        message: `Join our workspace on Zedu: ${generatedLink}`,
       });
     } catch (_error) {}
   };
@@ -118,30 +129,44 @@ const InvitePeopleScreen = ({ navigation }: any) => {
   };
 
   const handleCopyInviteLink = async () => {
-    if (!orgId || !roleId) return;
+    if (!orgId || !roleId || isGenerating) return;
 
+    const requestVersion = ++inviteRequestVersion.current;
     setIsGenerating(true);
     const payload = {
       organisation_id: orgId,
       role_id: roleId,
     };
 
-    const { data, error } = await PostRequest('/invite/general', payload);
+    try {
+      const { data, error } = await PostRequest('/invite/general', payload);
+      if (requestVersion !== inviteRequestVersion.current) return;
 
-    if (!error && data?.data?.invitation_link) {
-      const baseUrl = CLIENT_URL;
-      const link = `${baseUrl}/${data.data.invitation_link}`;
+      if (!error && data?.data?.invitation_link) {
+        const baseUrl = CLIENT_URL;
+        const link = `${baseUrl}/${data.data.invitation_link}`;
 
-      setGeneratedLink(link);
-      Clipboard.setString(link);
-      ShowNotify('Invite link copied to clipboard!', 'success');
-    } else {
-      dispatch({
-        type: ACTIONS.ERROR,
-        payload: 'Failed to generate invite link',
-      });
+        setGeneratedLink(link);
+        Clipboard.setString(link);
+        ShowNotify('Invite link copied to clipboard!', 'success');
+      } else {
+        dispatch({
+          type: ACTIONS.ERROR,
+          payload: 'Failed to generate invite link',
+        });
+      }
+    } catch (_error) {
+      if (requestVersion === inviteRequestVersion.current) {
+        dispatch({
+          type: ACTIONS.ERROR,
+          payload: 'Failed to generate invite link',
+        });
+      }
+    } finally {
+      if (requestVersion === inviteRequestVersion.current) {
+        setIsGenerating(false);
+      }
     }
-    setIsGenerating(false);
   };
 
   return (
@@ -228,7 +253,7 @@ const InvitePeopleScreen = ({ navigation }: any) => {
                 {roles.map(role => (
                   <TouchableOpacity
                     key={role.id}
-                    onPress={() => setRoleId(role.id)}
+                    onPress={() => handleRoleChange(role.id)}
                     style={[
                       styles.roleChip,
                       roleId === role.id && styles.roleChipActive,
@@ -271,7 +296,7 @@ const InvitePeopleScreen = ({ navigation }: any) => {
               <TouchableOpacity
                 style={styles.copyBtn}
                 onPress={handleCopyInviteLink}
-                disabled={isGenerating}
+                disabled={isGenerating || !roleId || !orgId}
               >
                 {isGenerating ? (
                   <ActivityIndicator size="small" color={colors.primary} />
@@ -283,7 +308,13 @@ const InvitePeopleScreen = ({ navigation }: any) => {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.shareOption} onPress={handleShare}>
+            <TouchableOpacity
+              style={styles.shareOption}
+              onPress={handleShare}
+              disabled={!generatedLink}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !generatedLink }}
+            >
               <View style={styles.shareIconCircle}>
                 <Feather name="share-2" size={20} color={colors.primary} />
               </View>
