@@ -55,9 +55,9 @@ const InvitePeopleScreen = ({ navigation }: any) => {
   }, [orgId]);
 
   const handleAddEmail = (text: string) => {
-    const trimmed = text.trim().toLowerCase();
-    if (trimmed.endsWith(',') || trimmed.endsWith(' ')) {
-      const email = trimmed.replace(/[, ]/g, '');
+    // Check the raw text: trimming first would drop the trailing space separator.
+    if (/[,\s]$/.test(text)) {
+      const email = text.replace(/[,\s]/g, '').toLowerCase();
       validateAndAdd(email);
     } else {
       setEmailInput(text);
@@ -119,7 +119,10 @@ const InvitePeopleScreen = ({ navigation }: any) => {
     });
 
     if (!error) {
-      ShowNotify(data?.message || `Invites sent successfully`, 'success');
+      ShowNotify(
+        'Invites sent',
+        data?.message || 'Your invites have been sent.',
+      );
 
       // Clear the fields
       setEmails([]);
@@ -157,7 +160,7 @@ const InvitePeopleScreen = ({ navigation }: any) => {
 
       setGeneratedLink(link);
       Clipboard.setString(link);
-      ShowNotify('Invite link copied to clipboard!', 'success');
+      ShowNotify('Link copied', 'Invite link copied to clipboard.');
     } else {
       dispatch({
         type: ACTIONS.ERROR,

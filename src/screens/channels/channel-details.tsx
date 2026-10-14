@@ -272,11 +272,8 @@ const ChannelDetailsScreen = ({ navigation, route }: any) => {
               </AppText>
             </View>
           </View>
-          <AppText variant="bold" style={styles.groupName}>
-            {channelDetails?.participants
-              ?.slice(0, 8)
-              .map(p => p.username)
-              .join(', ')}
+          <AppText variant="bold" style={styles.groupName} numberOfLines={2}>
+            {channelDetails?.name ? `#${channelDetails.name}` : ''}
           </AppText>
           <AppText
             size={13}

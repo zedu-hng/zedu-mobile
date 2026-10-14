@@ -43,7 +43,8 @@ const AddOrganisationScreen = () => {
   const [countryCode, setCountryCode] = useState<CountryCode>('US');
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { dispatch } = useDataContext();
+  const { state, dispatch } = useDataContext();
+  const { user } = state;
 
   const resetForm = () => {
     setOrgName('');
@@ -63,7 +64,7 @@ const AddOrganisationScreen = () => {
           ? country.name
           : country.name.common
         : null,
-      email: 'email@email.com',
+      email: user?.email,
     };
 
     const { data: res, error } = await PostRequest('/organisations', payload);
