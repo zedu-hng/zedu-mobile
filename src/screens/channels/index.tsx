@@ -139,6 +139,8 @@ const ChannelHome = () => {
               showsVerticalScrollIndicator={false}
               renderItem={({ item }) => {
                 const hasActiveBuzz = Boolean(item?.active_buzz);
+                // Time of the newest message in the preview, not the user's last visit (#200)
+                const lastMessageAt = item?.preview_thread?.[0]?.created_at;
 
                 return (
                   <TouchableOpacity
@@ -195,9 +197,9 @@ const ChannelHome = () => {
                           size={12}
                           style={[styles.chatTime, { marginRight: 0 }]}
                         >
-                          {item?.last_read_at
-                            ? moment(item.last_read_at).calendar(null, {
-                                dsameDay: 'h:mm a',
+                          {lastMessageAt
+                            ? moment(lastMessageAt).calendar(null, {
+                                sameDay: 'h:mm a',
                                 lastDay: '[Yesterday]',
                                 lastWeek: 'dddd',
                                 sameElse: 'DD/MM/YYYY',
