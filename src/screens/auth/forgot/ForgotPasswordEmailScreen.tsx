@@ -13,7 +13,7 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { createAuthStyles } from '@/theme/createScreenStyles';
 
 const ForgotPasswordEmailScreen: React.FC = () => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const styles = useMemo(() => createAuthStyles(colors), [colors]);
   const navigation = useNavigation();
   const [email, setEmail] = useState('');
@@ -53,7 +53,11 @@ const ForgotPasswordEmailScreen: React.FC = () => {
       >
         <View style={styles.logoContainer}>
           <Image
-            source={require('@/assets/splash-logo.png')}
+            source={
+              isDark
+                ? require('@/assets/zedu-logo-dark.png')
+                : require('@/assets/splash-logo.png')
+            }
             style={styles.logoForgot}
             resizeMode="contain"
           />

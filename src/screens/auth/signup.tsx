@@ -26,7 +26,7 @@ import { createAuthStyles } from '@/theme/createScreenStyles';
 // import RNPickerSelect from 'react-native-picker-select';
 
 const SignupScreen: React.FC = () => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const styles = useMemo(() => createAuthStyles(colors), [colors]);
   const [accountType, _setAccountType] = useState<
     'Individual' | 'Organization'
@@ -184,7 +184,11 @@ const SignupScreen: React.FC = () => {
       >
         <View style={styles.header}>
           <Image
-            source={require('@/assets/splash-logo.png')}
+            source={
+              isDark
+                ? require('@/assets/zedu-logo-dark.png')
+                : require('@/assets/splash-logo.png')
+            }
             style={styles.logo}
             resizeMode="contain"
           />
