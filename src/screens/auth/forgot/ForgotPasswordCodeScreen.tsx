@@ -25,7 +25,7 @@ const CODE_LENGTH = 6;
 const RESEND_TIMER = 30;
 
 const ForgotPasswordCodeScreen: React.FC = () => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const styles = useMemo(() => createAuthStyles(colors), [colors]);
   const navigation = useNavigation<any>();
   const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(''));
@@ -158,7 +158,11 @@ const ForgotPasswordCodeScreen: React.FC = () => {
       >
         <View style={styles.logoContainer}>
           <Image
-            source={require('@/assets/splash-logo.png')}
+            source={
+              isDark
+                ? require('@/assets/zedu-logo-dark.png')
+                : require('@/assets/splash-logo.png')
+            }
             style={styles.logoForgot}
             resizeMode="contain"
           />

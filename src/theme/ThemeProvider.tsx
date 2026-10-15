@@ -47,7 +47,7 @@ type ThemeProviderProps = {
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const systemColorScheme = useColorScheme();
-  const [preference, setPreferenceState] = useState<ThemePreference>('light');
+  const [preference, setPreferenceState] = useState<ThemePreference>('system');
   const [isReady, setIsReady] = useState(false);
   const [systemScheme, setSystemScheme] = useState<ColorSchemeName>(
     Appearance.getColorScheme() ?? 'light',
@@ -64,6 +64,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
       if (isThemePreference(stored)) {
         setPreferenceState(stored);
+      } else {
+        setPreferenceState('system');
       }
 
       setIsReady(true);
