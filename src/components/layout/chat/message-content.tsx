@@ -104,12 +104,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
   const openExternalLink = useCallback(async (url: string) => {
     const href = ensureHttpsUrl(url);
     try {
-      const supported = await Linking.canOpenURL(href);
-      if (supported) {
-        await Linking.openURL(href);
-      } else {
-        ShowNotify('Error', "Don't know how to open this URL: " + href);
-      }
+      await Linking.openURL(href);
     } catch {
       ShowNotify('Error', 'An error occurred while opening the link');
     }
