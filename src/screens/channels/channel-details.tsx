@@ -525,6 +525,16 @@ const ChannelDetailsScreen = ({ navigation, route }: any) => {
 
         <View style={styles.divider} />
 
+        {/* Channel membership action */}
+        <ActionItem
+          icon="log-out-outline"
+          label="Leave Channel"
+          color={colors.error}
+          onPress={() => exitSheetRef.current?.expand()}
+        />
+
+        <View style={styles.divider} />
+
         {/* Members List Section */}
         <View style={styles.sectionPadding}>
           <View style={styles.sectionHeader}>
@@ -662,18 +672,6 @@ const ChannelDetailsScreen = ({ navigation, route }: any) => {
             );
           })}
         </View>
-
-        <View style={styles.divider} />
-
-        {/* Danger Zone Actions */}
-        {/* <ActionItem icon="star-outline" label="Add to Favourites"/> */}
-        <ActionItem
-          icon="log-out-outline"
-          label="Leave Channel"
-          color={colors.error}
-          onPress={() => exitSheetRef.current?.expand()}
-        />
-        {/* <ActionItem icon="thumbs-down-outline" label="Report Group" color={colors.error} /> */}
 
         <View style={{ height: 60 }} />
       </ScrollView>
