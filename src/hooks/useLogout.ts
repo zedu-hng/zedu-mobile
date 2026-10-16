@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ACTIONS } from '@/store/types';
 import { useDataContext } from '@/store/useDataContext';
 import { clearAllData } from '@/utils/helper';
+import { unregisterAndroidPushDevice } from '@/services/push-notifications.service';
 
 export const useLogout = () => {
   const [loading, setLoading] = useState(false);
@@ -11,6 +12,7 @@ export const useLogout = () => {
     try {
       setLoading(true);
 
+      await unregisterAndroidPushDevice().catch(() => {});
       await clearAllData();
 
       dispatch({ type: ACTIONS.TOKEN, payload: null });
