@@ -267,48 +267,93 @@ const HomeScreen = () => {
               contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={false}
               renderItem={({ item }) => {
+                const isDM = item.channel_type === 'dm';
+                const participant = isDM ? item.participants?.[0] : null;
+
+                const handleAvatarPress = () => {
+                  if (!isDM || !participant) return;
+                  navigation.navigate('ChatStack', {
+                    screen: 'UserDetailScreen',
+                    params: {
+                      participant,
+                      channel_id: item.channel_id,
+                    },
+                  });
+                };
+
+                const handleChatPress = () => {
+                  if (item.is_suggested) {
+                    handleSuggestNavigate(item);
+                  } else {
+                    handleNavigate(item);
+                  }
+                };
+
                 return (
-                  <TouchableOpacity
-                    style={styles.chatItem}
-                    onPress={() =>
-                      item.is_suggested
-                        ? handleSuggestNavigate(item)
-                        : handleNavigate(item)
-                    }
-                  >
-                    <View style={styles.avatarWrapper}>
-                      {item.channel_type === 'group_dm' ? (
-                        <View style={styles.groupAvatarContainer}>
-                          {item.participants
-                            ?.slice(0, 3)
-                            .map((participant: any, index: number) => (
-                              <Image
-                                key={participant.user_id || index}
-                                source={{
-                                  uri:
-                                    participant.avatar_url ||
-                                    participant.default_avatar_url,
-                                }}
-                                style={[
-                                  styles.groupAvatarItem,
-                                  index === 0 && styles.groupAvatarMain,
-                                  index === 1 && styles.groupAvatarTopRight,
-                                  index === 2 && styles.groupAvatarBottomRight,
-                                ]}
-                              />
-                            ))}
-                        </View>
-                      ) : (
+                  <View style={styles.chatItem}>
+                    {isDM && participant ? (
+                      <TouchableOpacity
+                        style={styles.avatarWrapper}
+                        onPress={handleAvatarPress}
+                        activeOpacity={0.7}
+                        accessibilityLabel={`View ${participant.username}'s profile`}
+                        accessibilityRole="button"
+                        accessibilityHint="Opens user profile"
+                      >
                         <Image
                           source={{
                             uri: item.avatar_url || item.default_avatar_url,
                           }}
                           style={styles.chatAvatar}
                         />
-                      )}
-                    </View>
+                      </TouchableOpacity>
+                    ) : (
+                      <View style={styles.avatarWrapper}>
+                        {item.channel_type === 'group_dm' ? (
+                          <View style={styles.groupAvatarContainer}>
+                            {item.participants
+                              ?.slice(0, 3)
+                              .map((p: any, index: number) => (
+                                <Image
+                                  key={p.user_id || index}
+                                  source={{
+                                    uri: p.avatar_url || p.default_avatar_url,
+                                  }}
+                                  style={[
+                                    styles.groupAvatarItem,
+                                    index === 0 && styles.groupAvatarMain,
+                                    index === 1 && styles.groupAvatarTopRight,
+                                    index === 2 &&
+                                      styles.groupAvatarBottomRight,
+                                  ]}
+                                />
+                              ))}
+                          </View>
+                        ) : (
+                          <Image
+                            source={{
+                              uri: item.avatar_url || item.default_avatar_url,
+                            }}
+                            style={styles.chatAvatar}
+                          />
+                        )}
+                      </View>
+                    )}
 
-                    <View style={styles.chatInfo}>
+                    <TouchableOpacity
+                      style={styles.chatInfo}
+                      onPress={handleChatPress}
+                      activeOpacity={0.7}
+                      accessibilityLabel={
+                        isDM
+                          ? `Open chat with ${item.username}`
+                          : `Open group chat ${item.username}`
+                      }
+                      accessibilityRole="button"
+                      accessibilityHint={
+                        isDM ? 'Opens conversation' : 'Opens group conversation'
+                      }
+                    >
                       <View style={styles.chatHeaderRow}>
                         <AppText
                           variant="bold"
@@ -350,8 +395,8 @@ const HomeScreen = () => {
                           </View>
                         )}
                       </View>
-                    </View>
-                  </TouchableOpacity>
+                    </TouchableOpacity>
+                  </View>
                 );
               }}
               onEndReached={loadMore}
