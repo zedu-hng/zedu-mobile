@@ -96,6 +96,14 @@ const ChatInput = ({
   const skipSelectionMentionSync = useRef(false);
   const isFocusedRef = useRef(false);
 
+  const keyboardHideSubRef = useRef<ReturnType<
+    typeof Keyboard.addListener
+  > | null>(null);
+
+  useEffect(() => {
+    return () => keyboardHideSubRef.current?.remove();
+  }, []);
+
   useEffect(() => {
     messageRef.current = message;
     if (!message.trim()) {
@@ -403,8 +411,20 @@ const ChatInput = ({
             <TouchableOpacity
               style={styles.iconBtn}
               onPress={() => {
-                Keyboard.dismiss();
-                onMediaPicker();
+                if (Keyboard.isVisible()) {
+                  keyboardHideSubRef.current?.remove();
+                  keyboardHideSubRef.current = Keyboard.addListener(
+                    'keyboardDidHide',
+                    () => {
+                      keyboardHideSubRef.current?.remove();
+                      keyboardHideSubRef.current = null;
+                      onMediaPicker();
+                    },
+                  );
+                  Keyboard.dismiss();
+                } else {
+                  onMediaPicker();
+                }
               }}
             >
               <Image
