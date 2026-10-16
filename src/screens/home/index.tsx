@@ -30,7 +30,7 @@ import { ONESIGNAL_APP_ID } from '@env';
 import { PostRequest, PutRequest } from '@/utils/requests';
 import { RootStackParamList } from '@/navigation/navigator';
 import { UserAvatarWithStatus } from '@/components/ui/user-avatar-with-status';
-import { formatPreviewMessage } from '@/utils/message-text';
+import { getChatListPreview } from '@/utils/message-text';
 
 const HomeScreen = () => {
   const navigation = useNavigation<DrawerNavigationProp<RootStackParamList>>();
@@ -334,9 +334,7 @@ const HomeScreen = () => {
                           numberOfLines={1}
                           style={styles.chatMsg}
                         >
-                          {formatPreviewMessage(
-                            item.preview_message || 'Chat with user',
-                          )}
+                          {getChatListPreview(item) || 'Chat with user'}
                         </AppText>
                         {!!item.thread_count && item.thread_count > 0 && (
                           <View style={styles.countBadge}>

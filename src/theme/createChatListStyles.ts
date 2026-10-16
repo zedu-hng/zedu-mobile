@@ -64,7 +64,6 @@ export function createChatListStyles(colors: ThemeColors) {
     listContent: {
       paddingHorizontal: normalize(20),
       paddingTop: normalize(20),
-      paddingBottom: normalize(100),
     },
     chatItem: {
       flexDirection: 'row',
