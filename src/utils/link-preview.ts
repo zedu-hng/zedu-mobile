@@ -12,7 +12,7 @@ export type LinkPreviewData = {
 };
 
 const URL_IN_TEXT_REGEX =
-  /((?:https?:\/\/|www\.)[^\s<"']+|\b[\w-]+\.(?:com|co|ng|net|org|io|dev|ai|app|cc)(?:\/[^\s<"']*)?)/gi;
+  /((?:https?:\/\/|www\.)(?:(?!https?:\/\/)[^\s<>"'[\]()])+|\b[\w-]+\.(?:com|co|ng|net|org|io|dev|ai|app|cc)(?:\/(?:(?!https?:\/\/)[^\s<>"'[\]()])*)?)/gi;
 
 const previewCache = new Map<string, LinkPreviewData | null>();
 
