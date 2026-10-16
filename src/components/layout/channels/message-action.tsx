@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   InteractionManager,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import EmojiPicker from 'rn-emoji-keyboard';
 import { AppText } from '@/components/ui/text';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -32,6 +33,7 @@ export const MessageAction = forwardRef<
   { item: any; onClose: () => void }
 >(({ item, onClose }, ref) => {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const styles = useMemo(() => createMessageActionStyles(colors), [colors]);
   const emojiPickerTheme = useMemo(
     () => createEmojiPickerTheme(colors),
@@ -168,7 +170,7 @@ export const MessageAction = forwardRef<
       <AppBottomSheet
         ref={ref}
         snapPoints={mode === 'delete' ? ['40%'] : ['65%']}
-        paddingBottom={normalize(110)}
+        paddingBottom={insets.bottom + normalize(20)}
         onClose={() => {
           setMode('actions');
           onClose();
