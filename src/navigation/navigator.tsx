@@ -97,6 +97,11 @@ import {
   handleIncomingDirectCallCancelled,
   handleIncomingDirectCallAnsweredElsewhere,
 } from '@/services/incoming-direct-call-cancel.service';
+import {
+  isFcmPlatform,
+  requestAndroidNotificationPermission,
+  subscribeToAndroidPush,
+} from '@/services/push-notifications.service';
 import { getActiveRouteName, navigate } from './root-navigation';
 import { MinimizedCallWidget } from '@/components/buzz/MinimizedCallWidget';
 import { VoiceNotePlaybackHost } from '@/components/layout/chat/voice-note-playback-host';
@@ -216,8 +221,12 @@ export const AppNavigator = ({ currentRoute }: AppNavigatorProps) => {
     isInitializedRef.current && hasTokenRef.current;
 
   useEffect(() => {
-    OneSignal.initialize(ONESIGNAL_APP_ID);
-    OneSignal.Notifications.requestPermission(true);
+    if (isFcmPlatform) {
+      requestAndroidNotificationPermission().catch(() => {});
+    } else {
+      OneSignal.initialize(ONESIGNAL_APP_ID);
+      OneSignal.Notifications.requestPermission(true);
+    }
 
     const isDirectCallNotification = (notification: any) => {
       const payload =
@@ -529,11 +538,57 @@ export const AppNavigator = ({ currentRoute }: AppNavigatorProps) => {
       event.getNotification().display();
     };
 
-    OneSignal.Notifications.addEventListener('click', onClickListener);
-    OneSignal.Notifications.addEventListener(
-      'foregroundWillDisplay',
-      onForegroundDisplayListener,
-    );
+    const isAnsweredElsewhereNotification = (notification: any) =>
+      Boolean(
+        extractDirectCallAnsweredElsewhereDetails(
+          notification?.additionalData || {},
+          userRef.current?.user_id || userRef.current?.id,
+        ),
+      );
+
+    // FCM does not display notifications while the app is in the foreground, so chat
+    // messages surface as an in-app toast instead.
+    const onFcmForegroundMessage = async (notification: any) => {
+      // ZeduFirebaseMessagingService already dismissed the call and emitted the cancel event.
+      if (isDirectCallCancelledNotification(notification)) {
+        return;
+      }
+
+      if (isAnsweredElsewhereNotification(notification)) {
+        await processIncomingCallAnsweredElsewhere(notification);
+        return;
+      }
+
+      if (isDirectCallNotification(notification)) {
+        await processIncomingCallInvite(notification);
+        return;
+      }
+
+      const body = notification?.body;
+      ShowNotify(
+        notification?.title as string,
+        typeof body === 'string' ? body.replace(/<[^>]*>?/gm, '') : '',
+      );
+    };
+
+    let unsubscribePush: () => void = () => {};
+
+    if (isFcmPlatform) {
+      unsubscribePush = subscribeToAndroidPush({
+        onForeground: notification => {
+          onFcmForegroundMessage(notification).catch(() => {});
+        },
+        onOpened: notification => {
+          onClickListener({ notification }).catch(() => {});
+        },
+      });
+    } else {
+      OneSignal.Notifications.addEventListener('click', onClickListener);
+      OneSignal.Notifications.addEventListener(
+        'foregroundWillDisplay',
+        onForegroundDisplayListener,
+      );
+    }
 
     let unsubscribeNativeIncomingCall: () => void = () => {};
     let unsubscribeNativeIncomingCallCancelled: () => void = () => {};
@@ -567,11 +622,15 @@ export const AppNavigator = ({ currentRoute }: AppNavigatorProps) => {
     }
 
     return () => {
-      OneSignal.Notifications.removeEventListener('click', onClickListener);
-      OneSignal.Notifications.removeEventListener(
-        'foregroundWillDisplay',
-        onForegroundDisplayListener,
-      );
+      if (isFcmPlatform) {
+        unsubscribePush();
+      } else {
+        OneSignal.Notifications.removeEventListener('click', onClickListener);
+        OneSignal.Notifications.removeEventListener(
+          'foregroundWillDisplay',
+          onForegroundDisplayListener,
+        );
+      }
       unsubscribeNativeIncomingCall();
       unsubscribeNativeIncomingCallCancelled();
     };
