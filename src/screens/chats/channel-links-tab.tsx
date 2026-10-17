@@ -73,7 +73,7 @@ export const ChannelLinksTab: React.FC<ChannelLinksTabProps> = ({
       )}
       {links.map(item => (
         <TouchableOpacity
-          key={item.url}
+          key={`${item.thread_id}-${item.url}`}
           style={styles.linkItem}
           activeOpacity={0.7}
           onPress={() => openChannelLink(item.url)}
@@ -82,7 +82,7 @@ export const ChannelLinksTab: React.FC<ChannelLinksTabProps> = ({
             name="link-outline"
             size={20}
             color={colors.primary}
-            style={{ marginRight: 10 }}
+            style={styles.linkIcon}
           />
           <AppText style={styles.linkText} numberOfLines={1}>
             {item.url}

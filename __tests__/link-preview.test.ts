@@ -59,4 +59,11 @@ describe('extractMessageUrls', () => {
       ),
     ).toEqual(['https://youtube.com', 'https://linkedin.com']);
   });
+
+  it('deliberately splits an embedded protocol in the query string', () => {
+    expect(extractMessageUrls('https://example.com?next=http://x')).toEqual([
+      'https://example.com?next=',
+      'http://x',
+    ]);
+  });
 });
