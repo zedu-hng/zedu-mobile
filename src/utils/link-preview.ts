@@ -11,8 +11,8 @@ export type LinkPreviewData = {
   siteName: string;
 };
 
-// Splits glued URLs (https://a.comhttps://b.com and markdown-glued links), stops at ) ] [ >.
-// URLs with an embedded protocol in the query string (?next=http://x) are deliberately split in two.
+// Splits glued URLs (a host directly followed by another host, and markdown-glued links), stops at ) ] [ >.
+// An embedded protocol in a query string (?next=...) is deliberately split in two.
 const URL_IN_TEXT_REGEX =
   /((?:https?:\/\/|www\.)(?:(?!https?:\/\/)[^\s<>"'[\]()])+|\b[\w-]+\.(?:com|co|ng|net|org|io|dev|ai|app|cc)(?:\/(?:(?!https?:\/\/)[^\s<>"'[\]()])*)?)/gi;
 

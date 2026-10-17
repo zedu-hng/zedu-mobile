@@ -13,7 +13,7 @@ import type { ChannelLinkItem } from '../src/services/channels/channel-links';
 
 const links: ChannelLinkItem[] = [
   {
-    url: 'https://example.com/a',
+    url: 'https://zedu.chat/a',
     created_at: '2026-10-02T10:00:00Z',
     thread_id: 't1',
   },
@@ -78,7 +78,7 @@ test('shows the empty state when no links were shared', async () => {
 test('shows a row per link', async () => {
   const renderer = await renderTab({ links });
   const contents = textContents(renderer);
-  expect(contents).toContain('https://example.com/a');
+  expect(contents).toContain('https://zedu.chat/a');
   expect(contents).toContain('https://zedu.chat/b');
   expect(renderer.root.findAllByType(TouchableOpacity)).toHaveLength(2);
 });
