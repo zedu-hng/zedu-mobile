@@ -46,6 +46,12 @@ describe('extractMessageUrls', () => {
     ]);
   });
 
+  it('keeps a URL with balanced parentheses in its path whole', () => {
+    expect(
+      extractMessageUrls('See ' + link('example.com/a(b)c') + ' for details'),
+    ).toEqual([link('example.com/a(b)c')]);
+  });
+
   it('dedupes repeated URLs', () => {
     expect(
       extractMessageUrls(link('example.com') + ' and ' + link('example.com')),

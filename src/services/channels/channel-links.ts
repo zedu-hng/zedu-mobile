@@ -20,13 +20,14 @@ type ChannelThreadsResponse = {
 
 export const useChannelLinks = (channelId?: string, enabled = false) => {
   const [links, setLinks] = useState<ChannelLinkItem[]>([]);
-  const [loadedFor, setLoadedFor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!enabled || !channelId) return;
     let cancelled = false;
     const load = async () => {
+      setLoading(true);
       setError(null);
       const { data: response, error: fetchError } =
         await GetRequest<ChannelThreadsResponse>(
@@ -62,7 +63,7 @@ export const useChannelLinks = (channelId?: string, enabled = false) => {
           ),
         );
       }
-      setLoadedFor(channelId);
+      setLoading(false);
     };
     load();
     return () => {
@@ -70,6 +71,5 @@ export const useChannelLinks = (channelId?: string, enabled = false) => {
     };
   }, [channelId, enabled]);
 
-  const loading = enabled && !!channelId && loadedFor !== channelId;
   return { links, loading, error };
 };

@@ -11,10 +11,11 @@ export type LinkPreviewData = {
   siteName: string;
 };
 
-// Splits glued URLs (a host directly followed by another host, and markdown-glued links), stops at ) ] [ >.
+// Splits glued URLs (a host directly followed by another host, and markdown-glued links), stops at ] [ >.
+// Parentheses are allowed inside a URL: a balanced-paren path stays whole.
 // An embedded protocol in a query string (?next=...) is deliberately split in two.
 const URL_IN_TEXT_REGEX =
-  /((?:https?:\/\/|www\.)(?:(?!https?:\/\/)[^\s<>"'[\]()])+|\b[\w-]+\.(?:com|co|ng|net|org|io|dev|ai|app|cc)(?:\/(?:(?!https?:\/\/)[^\s<>"'[\]()])*)?)/gi;
+  /((?:https?:\/\/|www\.)(?:(?!https?:\/\/)[^\s<>"'[\]])+|\b[\w-]+\.(?:com|co|ng|net|org|io|dev|ai|app|cc)(?:\/(?:(?!https?:\/\/)[^\s<>"'[\]])*)?)/gi;
 
 const previewCache = new Map<string, LinkPreviewData | null>();
 

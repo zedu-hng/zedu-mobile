@@ -481,114 +481,113 @@ const MediaGalleryScreen: React.FC<MediaGalleryScreenProps> = ({
         <View style={{ width: 32 }} />
       </View>
 
-      {usesChannelApi && channelError && !isLinksTab ? (
-        <View style={styles.loadingWrap}>
-          <AppText size={13} style={styles.emptyText}>
-            {channelError}
-          </AppText>
-        </View>
-      ) : (
-        <>
-          <View style={styles.customTabBarContainer}>
-            <View style={styles.customTabBar}>
-              <ScrollView
-                ref={tabScrollRef}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                bounces={false}
-                contentContainerStyle={styles.customTabScrollContent}
-              >
-                {TAB_LIST.map(tab => (
-                  <TouchableOpacity
-                    key={tab.key}
-                    style={styles.customTabBtn}
-                    activeOpacity={0.7}
-                    onPress={() => handleTabPress(tab.key)}
-                    onLayout={event => handleTabLayout(tab.key, event)}
+      <>
+        <View style={styles.customTabBarContainer}>
+          <View style={styles.customTabBar}>
+            <ScrollView
+              ref={tabScrollRef}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              bounces={false}
+              contentContainerStyle={styles.customTabScrollContent}
+            >
+              {TAB_LIST.map(tab => (
+                <TouchableOpacity
+                  key={tab.key}
+                  style={styles.customTabBtn}
+                  activeOpacity={0.7}
+                  onPress={() => handleTabPress(tab.key)}
+                  onLayout={event => handleTabLayout(tab.key, event)}
+                >
+                  <AppText
+                    style={[
+                      styles.customTabLabel,
+                      activeTab === tab.key && styles.customTabLabelActive,
+                    ]}
                   >
-                    <AppText
-                      style={[
-                        styles.customTabLabel,
-                        activeTab === tab.key && styles.customTabLabelActive,
-                      ]}
-                    >
-                      {tab.label}
-                    </AppText>
-                  </TouchableOpacity>
-                ))}
-                <Animated.View
-                  style={[
-                    styles.customTabUnderline,
-                    {
-                      left: underlineLeft,
-                      width: underlineWidth,
-                    },
-                  ]}
-                />
-              </ScrollView>
+                    {tab.label}
+                  </AppText>
+                </TouchableOpacity>
+              ))}
+              <Animated.View
+                style={[
+                  styles.customTabUnderline,
+                  {
+                    left: underlineLeft,
+                    width: underlineWidth,
+                  },
+                ]}
+              />
+            </ScrollView>
+          </View>
+        </View>
+        <View style={styles.tabContentContainer}>
+          {usesChannelApi && channelError && !isLinksTab && (
+            <View style={styles.loadingWrap}>
+              <AppText size={13} style={styles.emptyText}>
+                {channelError}
+              </AppText>
             </View>
-          </View>
-          <View style={styles.tabContentContainer}>
-            {activeTab !== 'documents' && !isLinksTab && (
-              <MediaTab
-                media={channelFiles}
-                onImagePress={handleMediaPress}
-                loading={channelLoading}
-                loadingMore={tabLoadingMore}
-                onLoadMore={tabLoadMore}
-                emptyText={`No ${activeTab} files found`}
-                styles={styles}
-                colors={colors}
-              />
-            )}
-            {activeTab === 'documents' && (
-              <ListTab
-                items={channelFiles}
-                loading={channelLoading}
-                loadingMore={tabLoadingMore}
-                onLoadMore={tabLoadMore}
-                emptyText="No documents found"
-                styles={styles}
-                colors={colors}
-                renderRow={item => (
-                  <TouchableOpacity key={item.id} style={styles.docItem}>
-                    <Ionicons
-                      name={
-                        getDocumentVisual(
-                          item.file_name,
-                          item.mime_type,
-                          colors.primary,
-                        ).icon
-                      }
-                      size={22}
-                      color={
-                        getDocumentVisual(
-                          item.file_name,
-                          item.mime_type,
-                          colors.primary,
-                        ).color
-                      }
-                      style={{ marginRight: 10 }}
-                    />
-                    <AppText style={styles.docText} numberOfLines={1}>
-                      {item.file_name || item.file_link}
-                    </AppText>
-                  </TouchableOpacity>
-                )}
-              />
-            )}
-            {isLinksTab && (
-              <ChannelLinksTab
-                links={channelLinks}
-                loading={linksLoading}
-                error={linksError}
-                styles={styles}
-                colors={colors}
-              />
-            )}
-          </View>
-        </>
-      )}
+          )}
+          {!channelError && activeTab !== 'documents' && !isLinksTab && (
+            <MediaTab
+              media={channelFiles}
+              onImagePress={handleMediaPress}
+              loading={channelLoading}
+              loadingMore={tabLoadingMore}
+              onLoadMore={tabLoadMore}
+              emptyText={`No ${activeTab} files found`}
+              styles={styles}
+              colors={colors}
+            />
+          )}
+          {!channelError && activeTab === 'documents' && (
+            <ListTab
+              items={channelFiles}
+              loading={channelLoading}
+              loadingMore={tabLoadingMore}
+              onLoadMore={tabLoadMore}
+              emptyText="No documents found"
+              styles={styles}
+              colors={colors}
+              renderRow={item => (
+                <TouchableOpacity key={item.id} style={styles.docItem}>
+                  <Ionicons
+                    name={
+                      getDocumentVisual(
+                        item.file_name,
+                        item.mime_type,
+                        colors.primary,
+                      ).icon
+                    }
+                    size={22}
+                    color={
+                      getDocumentVisual(
+                        item.file_name,
+                        item.mime_type,
+                        colors.primary,
+                      ).color
+                    }
+                    style={{ marginRight: 10 }}
+                  />
+                  <AppText style={styles.docText} numberOfLines={1}>
+                    {item.file_name || item.file_link}
+                  </AppText>
+                </TouchableOpacity>
+              )}
+            />
+          )}
+          {isLinksTab && (
+            <ChannelLinksTab
+              links={channelLinks}
+              loading={linksLoading}
+              error={linksError}
+              styles={styles}
+              colors={colors}
+            />
+          )}
+        </View>
+      </>
 
       <MediaPreviewModal
         visible={!!previewItem}
