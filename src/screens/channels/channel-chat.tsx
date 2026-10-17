@@ -47,6 +47,8 @@ import { ShowNotify } from '@/components/ui/toast';
 import buzzService from '@/services/buzz.service';
 import ChatBackground from '@/components/layout/chat/chat-background';
 import { useMessageDraft } from '@/hooks/useMessageDraft';
+import StickyDateLabel from '@/components/layout/chat/sticky-date-label';
+import { useStickyDateLabel } from '@/hooks/useStickyDateLabel';
 
 const ChannelChatScreen = ({ navigation, route }: any) => {
   const { colors } = useTheme();
@@ -54,6 +56,13 @@ const ChannelChatScreen = ({ navigation, route }: any) => {
   const [message, setMessage] = useState('');
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const {
+    dateLabel,
+    listTop,
+    onListLayout,
+    onViewableItemsChanged,
+    viewabilityConfig,
+  } = useStickyDateLabel();
   const actionSheetRef = useRef<any>(null);
   const pickerSheetRef = useRef<any>(null);
   const [selectedMsg, setSelectedMsg] = useState<Channel | null>(null);
@@ -611,6 +620,9 @@ const ChannelChatScreen = ({ navigation, route }: any) => {
           ref={flatListRef}
           data={channelsChat}
           inverted
+          onLayout={onListLayout}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig}
           keyExtractor={(item, index) => `${item.thread_id}-${index}`}
           renderItem={({ item, index }) => (
             <View
@@ -651,6 +663,7 @@ const ChannelChatScreen = ({ navigation, route }: any) => {
           }
         />
       )}
+      {channelAccess && <StickyDateLabel label={dateLabel} top={listTop} />}
 
       <ChatKeyboardAvoidingView>
         {channelAccess === false ? (
