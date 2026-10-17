@@ -282,6 +282,8 @@ const SignupScreen: React.FC = () => {
               placeholder="Email"
               value={email}
               onChangeText={setEmail}
+              keyboardType="email-address"
+              returnKeyType="done"
             />
 
             <AppInput
@@ -337,6 +339,8 @@ const SignupScreen: React.FC = () => {
               placeholder="Email"
               value={email}
               onChangeText={setEmail}
+              keyboardType="email-address"
+              returnKeyType="done"
             />
             <AppInput
               label="Password"

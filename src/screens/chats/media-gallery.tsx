@@ -362,6 +362,14 @@ const FILE_CATEGORY_PARAM: Record<
   documents: 'documents',
 };
 
+const EMPTY_MESSAGE: Record<(typeof TAB_LIST)[number]['key'], string> = {
+  all: 'No files found',
+  images: 'No images found',
+  videos: 'No videos found',
+  audio: 'No audio files found',
+  documents: 'No documents found',
+};
+
 const MediaGalleryScreen: React.FC<MediaGalleryScreenProps> = ({
   route,
   navigation,
@@ -520,7 +528,7 @@ const MediaGalleryScreen: React.FC<MediaGalleryScreenProps> = ({
                 loading={channelLoading}
                 loadingMore={tabLoadingMore}
                 onLoadMore={tabLoadMore}
-                emptyText={`No ${activeTab} files found`}
+                emptyText={EMPTY_MESSAGE[activeTab]}
                 styles={styles}
                 colors={colors}
               />

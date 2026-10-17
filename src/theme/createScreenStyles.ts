@@ -2,6 +2,16 @@ import { Platform, StyleSheet } from 'react-native';
 import type { ThemeColors } from './types';
 
 export function createSettingsStyles(colors: ThemeColors) {
+  // Soft brand-tinted tile behind each settings icon (10% opacity, works in both themes)
+  const iconTile = {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    backgroundColor: `${colors.primary}1A`,
+  };
+
   return StyleSheet.create({
     header: {
       backgroundColor: colors.secondary,
@@ -58,15 +68,23 @@ export function createSettingsStyles(colors: ThemeColors) {
       borderColor: colors.border,
     },
     itemRow: { flexDirection: 'row', alignItems: 'center', padding: 14 },
-    iconContainer: { width: 32, alignItems: 'center' },
+    iconContainer: iconTile,
     textContainer: { flex: 1, marginLeft: 12 },
     itemTitle: { fontSize: 16, color: colors.textPrimary },
     itemSubtitle: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
     divider: {
       height: StyleSheet.hairlineWidth,
       backgroundColor: colors.border,
-      marginLeft: 58,
+      marginLeft: 62,
     },
+    deleteLink: {
+      alignSelf: 'flex-start',
+      marginTop: 24,
+      marginBottom: 40,
+      paddingVertical: 8,
+      paddingHorizontal: 4,
+    },
+    deleteLinkText: { fontSize: 14, color: colors.textSecondary },
     statusRow: {
       paddingVertical: 15,
       paddingHorizontal: 16,
@@ -79,11 +97,7 @@ export function createSettingsStyles(colors: ThemeColors) {
       flexDirection: 'row',
       alignItems: 'center',
     },
-    statusEmojiContainer: {
-      width: 28,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
+    statusEmojiContainer: iconTile,
     statusTextContainer: {
       flex: 1,
       marginLeft: 12,
