@@ -13,7 +13,7 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { createAuthStyles } from '@/theme/createScreenStyles';
 
 const ForgotPasswordResetScreen: React.FC = () => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const styles = useMemo(() => createAuthStyles(colors), [colors]);
   const navigation = useNavigation();
   const [newPassword, setNewPassword] = useState('');
@@ -33,10 +33,10 @@ const ForgotPasswordResetScreen: React.FC = () => {
       return;
     }
 
-    if (newPassword.length < 8) {
+    if (newPassword.length < 7) {
       dispatch({
         type: ACTIONS.ERROR,
-        payload: 'Password must be at least 8 characters long',
+        payload: 'Password must be at least 7 characters',
       });
       return;
     }
@@ -83,7 +83,11 @@ const ForgotPasswordResetScreen: React.FC = () => {
       >
         <View style={styles.logoContainer}>
           <Image
-            source={require('@/assets/splash-logo.png')}
+            source={
+              isDark
+                ? require('@/assets/zedu-logo-dark.png')
+                : require('@/assets/splash-logo.png')
+            }
             style={styles.logoForgot}
             resizeMode="contain"
           />

@@ -22,6 +22,7 @@ import { useMentions, MentionApiItem } from '@/services/mentions/useMentions';
 import moment from 'moment';
 import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5';
 import { ACTIONS } from '@/store/types';
+import { formatPreviewMessage } from '@/utils/message-text';
 import ChatSkeleton from '@/components/skeleton/chat-skeleton';
 import { UserAvatar } from '../channels/user-avatar';
 
@@ -120,7 +121,7 @@ const MentionsScreen = () => {
           <View style={styles.chatFooterRow}>
             <AppText size={14} numberOfLines={1} style={styles.chatMsg}>
               {item.previe_message
-                ? item.previe_message.replace(/<[^>]*>?/gm, '')
+                ? formatPreviewMessage(item.previe_message)
                 : ''}
             </AppText>
             {/* {lastMessage?.message_count > 0 && (

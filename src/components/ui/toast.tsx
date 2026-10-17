@@ -36,7 +36,7 @@ export const ShowNotify = (
 };
 
 const AppNotification = ({ text1, text2, props, onPress }: any) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const styles = useMemo(() => createToastStyles(colors), [colors]);
   const translateY = useRef(new Animated.Value(0)).current;
 
@@ -85,6 +85,8 @@ const AppNotification = ({ text1, text2, props, onPress }: any) => {
               source={
                 props.avatar
                   ? { uri: props.avatar }
+                  : isDark
+                  ? require('@/assets/zedu-logo-dark.png')
                   : require('@/assets/Logo.png')
               }
               style={styles.avatar}

@@ -14,7 +14,7 @@ import { CLIENT_URL } from '@env';
 const clientBaseUrl = (CLIENT_URL || 'https://zedu.chat').replace(/\/$/, '');
 
 const WelcomeScreen: React.FC = () => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const styles = useMemo(() => createWelcomeScreenStyles(colors), [colors]);
   const navigation = useNavigation();
   const [permissionsGranted, setPermissionsGranted] = useState(false);
@@ -69,7 +69,11 @@ const WelcomeScreen: React.FC = () => {
       <View style={styles.topSection}>
         <View style={styles.logoContainer}>
           <Image
-            source={require('../assets/splash-logo.png')}
+            source={
+              isDark
+                ? require('@/assets/zedu-logo-dark.png')
+                : require('../assets/splash-logo.png')
+            }
             style={styles.logo}
             resizeMode="contain"
           />
