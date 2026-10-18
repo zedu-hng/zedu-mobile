@@ -52,6 +52,27 @@ describe('extractMessageUrls', () => {
     ).toEqual([link('example.com/a(b)c')]);
   });
 
+  it('keeps a query string on a bare domain', () => {
+    expect(extractMessageUrls('open example.com?ref=invite first')).toEqual([
+      link('example.com?ref=invite'),
+    ]);
+  });
+
+  it('keeps two links distinct when only the path case differs', () => {
+    expect(
+      extractMessageUrls(
+        link('example.com/User') + ' ' + link('example.com/user'),
+      ),
+    ).toEqual([link('example.com/User'), link('example.com/user')]);
+  });
+
+  it('splits an embedded protocol after a bare-domain query', () => {
+    expect(extractMessageUrls('example.com?next=' + HTTP + 'x')).toEqual([
+      link('example.com?next='),
+      HTTP + 'x',
+    ]);
+  });
+
   it('dedupes repeated URLs', () => {
     expect(
       extractMessageUrls(link('example.com') + ' and ' + link('example.com')),

@@ -14,8 +14,9 @@ export type LinkPreviewData = {
 // Splits glued URLs (a host directly followed by another host, and markdown-glued links), stops at ] [ >.
 // Parentheses are allowed inside a URL: a balanced-paren path stays whole.
 // An embedded protocol in a query string (?next=...) is deliberately split in two.
+// Bare domains may start a suffix with /, ? or #: queries and fragments are kept.
 const URL_IN_TEXT_REGEX =
-  /((?:https?:\/\/|www\.)(?:(?!https?:\/\/)[^\s<>"'[\]])+|\b[\w-]+\.(?:com|co|ng|net|org|io|dev|ai|app|cc)(?:\/(?:(?!https?:\/\/)[^\s<>"'[\]])*)?)/gi;
+  /((?:https?:\/\/|www\.)(?:(?!https?:\/\/)[^\s<>"'[\]])+|\b[\w-]+\.(?:com|co|ng|net|org|io|dev|ai|app|cc)(?:[/?#](?:(?!https?:\/\/)[^\s<>"'[\]])*)?)/gi;
 
 const previewCache = new Map<string, LinkPreviewData | null>();
 
@@ -29,6 +30,16 @@ const normalizeExtractedUrl = (raw: string): string => {
   return cleaned;
 };
 
+// Host is case-insensitive, path and query are not (RFC 3986): fold only the host.
+export const dedupeKey = (raw: string): string => {
+  const [, scheme = '', hostPart = '', parsedRest = ''] =
+    raw.match(/^((?:https?:\/\/)?)([^/?#]*)(.*)$/i) ?? [];
+  return `${scheme.toLowerCase()}${hostPart.toLowerCase()}${parsedRest}`.replace(
+    /\/$/,
+    '',
+  );
+};
+
 /** Extract unique http(s) URLs from TipTap/HTML message text. */
 export function extractMessageUrls(
   htmlOrText: string,
@@ -38,9 +49,7 @@ export function extractMessageUrls(
 
   const plain = getPlainMessageText(htmlOrText) || htmlOrText;
   const exclude = new Set(
-    excludeUrls
-      .filter(Boolean)
-      .map(u => ensureHttpsUrl(u).replace(/\/$/, '').toLowerCase()),
+    excludeUrls.filter(Boolean).map(u => dedupeKey(ensureHttpsUrl(u))),
   );
 
   const found: string[] = [];
@@ -50,7 +59,7 @@ export function extractMessageUrls(
   let match: RegExpExecArray | null;
   while ((match = URL_IN_TEXT_REGEX.exec(plain)) !== null) {
     const url = normalizeExtractedUrl(match[1]);
-    const key = url.replace(/\/$/, '').toLowerCase();
+    const key = dedupeKey(url);
     if (seen.has(key) || exclude.has(key) || isDocumentUrl(url)) {
       continue;
     }

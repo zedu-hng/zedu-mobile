@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { GetRequest } from '@/utils/requests';
-import { extractMessageUrls } from '@/utils/link-preview';
+import { dedupeKey, extractMessageUrls } from '@/utils/link-preview';
 
 export type ChannelLinkItem = {
   url: string;
@@ -45,7 +45,7 @@ export const useChannelLinks = (channelId?: string, enabled = false) => {
           const urls = extractMessageUrls(thread.message || '');
           const createdAt = thread.created_at || '';
           urls.forEach(url => {
-            const key = url.replace(/\/$/, '').toLowerCase();
+            const key = dedupeKey(url);
             const existing = byUrl.get(key);
             if (!existing || createdAt > existing.created_at) {
               byUrl.set(key, {
