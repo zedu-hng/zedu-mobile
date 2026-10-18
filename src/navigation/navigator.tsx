@@ -648,6 +648,11 @@ export const AppNavigator = ({ currentRoute }: AppNavigatorProps) => {
           dispatch({ type: ACTIONS.ORG_ID, payload: current_org });
           dispatch({ type: ACTIONS.ORG_DATA, payload: organisation });
           dispatch({ type: ACTIONS.USER, payload: user });
+          // Signed-in launch skips the welcome screen, so ask here. On a signed-out launch the welcome
+          // screen asks after camera/audio, so two permission dialogs never open at the same time.
+          OneSignal.Notifications.requestPermission(true).catch(
+            () => undefined,
+          );
         }
       } finally {
         setInitializing(false);

@@ -42,6 +42,8 @@ import { buildMessageHtml, getPlainMessageText } from '@/utils/message-text';
 import { createChatDetailStyles } from '@/theme/createScreenStyles';
 import ChatBackground from '@/components/layout/chat/chat-background';
 import { useMessageDraft } from '@/hooks/useMessageDraft';
+import StickyDateLabel from '@/components/layout/chat/sticky-date-label';
+import { useStickyDateLabel } from '@/hooks/useStickyDateLabel';
 
 const ChatDetailScreen = ({ navigation }: any) => {
   const { colors } = useTheme();
@@ -49,6 +51,13 @@ const ChatDetailScreen = ({ navigation }: any) => {
   const [message, setMessage] = useState('');
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const {
+    dateLabel,
+    listTop,
+    onListLayout,
+    onViewableItemsChanged,
+    viewabilityConfig,
+  } = useStickyDateLabel();
   const actionSheetRef = useRef<any>(null);
   const pickerSheetRef = useRef<any>(null);
   const [selectedMsg, setSelectedMsg] = useState<ChatItem | null>(null);
@@ -499,6 +508,9 @@ const ChatDetailScreen = ({ navigation }: any) => {
         ref={flatListRef}
         data={dmsChat}
         inverted
+        onLayout={onListLayout}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
         showsVerticalScrollIndicator={false}
         keyExtractor={item => item.thread_id}
         renderItem={({ item, index }) => (
@@ -539,6 +551,7 @@ const ChatDetailScreen = ({ navigation }: any) => {
           ) : null
         }
       />
+      <StickyDateLabel label={dateLabel} top={listTop} />
 
       <ChatKeyboardAvoidingView>
         {mentionState && (
