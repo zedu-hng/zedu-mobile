@@ -1475,6 +1475,9 @@ export function createChatMediaStyles(colors: ThemeColors) {
       fontSize: 15,
       flex: 1,
     },
+    linkIcon: {
+      marginRight: 10,
+    },
     docItem: {
       flexDirection: 'row',
       alignItems: 'center',

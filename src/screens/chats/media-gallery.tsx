@@ -22,6 +22,8 @@ import {
   useChannelFiles,
   ChannelFileMediaItem,
 } from '@/services/channels/channel-files';
+import { useChannelLinks } from '@/services/channels/channel-links';
+import { ChannelLinksTab } from './channel-links-tab';
 
 type PreviewMediaItem = ChannelFileMediaItem;
 
@@ -349,6 +351,7 @@ const TAB_LIST = [
   { key: 'videos', label: 'Videos' },
   { key: 'audio', label: 'Audio' },
   { key: 'documents', label: 'Documents' },
+  { key: 'links', label: 'Links' },
 ] as const;
 
 const FILE_CATEGORY_PARAM: Record<
@@ -360,6 +363,8 @@ const FILE_CATEGORY_PARAM: Record<
   videos: 'videos',
   audio: 'audio',
   documents: 'documents',
+  // Links are extracted from thread messages, never sent as a files type.
+  links: undefined,
 };
 
 const MediaGalleryScreen: React.FC<MediaGalleryScreenProps> = ({
@@ -373,6 +378,7 @@ const MediaGalleryScreen: React.FC<MediaGalleryScreenProps> = ({
 
   const [activeTab, setActiveTab] =
     React.useState<(typeof TAB_LIST)[number]['key']>('all');
+  const isLinksTab = activeTab === 'links';
   const fileCategory = FILE_CATEGORY_PARAM[activeTab];
 
   const {
@@ -383,6 +389,12 @@ const MediaGalleryScreen: React.FC<MediaGalleryScreenProps> = ({
     loadMore: channelLoadMore,
     error: channelError,
   } = useChannelFiles(channel_id, fileCategory);
+
+  const {
+    links: channelLinks,
+    loading: linksLoading,
+    error: linksError,
+  } = useChannelLinks(channel_id, isLinksTab);
 
   type TabKey = (typeof TAB_LIST)[number]['key'];
   const tabScrollRef = useRef<ScrollView>(null);
@@ -439,7 +451,11 @@ const MediaGalleryScreen: React.FC<MediaGalleryScreenProps> = ({
     if (tabKey === activeTab) {
       return;
     }
-    setChannelLoading(true);
+    const nextCategory = FILE_CATEGORY_PARAM[tabKey];
+    const currentCategory = FILE_CATEGORY_PARAM[activeTab];
+    if (nextCategory !== currentCategory && tabKey !== 'links') {
+      setChannelLoading(true);
+    }
     setActiveTab(tabKey);
   };
 
@@ -465,105 +481,113 @@ const MediaGalleryScreen: React.FC<MediaGalleryScreenProps> = ({
         <View style={{ width: 32 }} />
       </View>
 
-      {usesChannelApi && channelError ? (
-        <View style={styles.loadingWrap}>
-          <AppText size={13} style={styles.emptyText}>
-            {channelError}
-          </AppText>
-        </View>
-      ) : (
-        <>
-          <View style={styles.customTabBarContainer}>
-            <View style={styles.customTabBar}>
-              <ScrollView
-                ref={tabScrollRef}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                bounces={false}
-                contentContainerStyle={styles.customTabScrollContent}
-              >
-                {TAB_LIST.map(tab => (
-                  <TouchableOpacity
-                    key={tab.key}
-                    style={styles.customTabBtn}
-                    activeOpacity={0.7}
-                    onPress={() => handleTabPress(tab.key)}
-                    onLayout={event => handleTabLayout(tab.key, event)}
+      <>
+        <View style={styles.customTabBarContainer}>
+          <View style={styles.customTabBar}>
+            <ScrollView
+              ref={tabScrollRef}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              bounces={false}
+              contentContainerStyle={styles.customTabScrollContent}
+            >
+              {TAB_LIST.map(tab => (
+                <TouchableOpacity
+                  key={tab.key}
+                  style={styles.customTabBtn}
+                  activeOpacity={0.7}
+                  onPress={() => handleTabPress(tab.key)}
+                  onLayout={event => handleTabLayout(tab.key, event)}
+                >
+                  <AppText
+                    style={[
+                      styles.customTabLabel,
+                      activeTab === tab.key && styles.customTabLabelActive,
+                    ]}
                   >
-                    <AppText
-                      style={[
-                        styles.customTabLabel,
-                        activeTab === tab.key && styles.customTabLabelActive,
-                      ]}
-                    >
-                      {tab.label}
-                    </AppText>
-                  </TouchableOpacity>
-                ))}
-                <Animated.View
-                  style={[
-                    styles.customTabUnderline,
-                    {
-                      left: underlineLeft,
-                      width: underlineWidth,
-                    },
-                  ]}
-                />
-              </ScrollView>
+                    {tab.label}
+                  </AppText>
+                </TouchableOpacity>
+              ))}
+              <Animated.View
+                style={[
+                  styles.customTabUnderline,
+                  {
+                    left: underlineLeft,
+                    width: underlineWidth,
+                  },
+                ]}
+              />
+            </ScrollView>
+          </View>
+        </View>
+        <View style={styles.tabContentContainer}>
+          {usesChannelApi && channelError && !isLinksTab && (
+            <View style={styles.loadingWrap}>
+              <AppText size={13} style={styles.emptyText}>
+                {channelError}
+              </AppText>
             </View>
-          </View>
-          <View style={styles.tabContentContainer}>
-            {activeTab !== 'documents' && (
-              <MediaTab
-                media={channelFiles}
-                onImagePress={handleMediaPress}
-                loading={channelLoading}
-                loadingMore={tabLoadingMore}
-                onLoadMore={tabLoadMore}
-                emptyText={`No ${activeTab} files found`}
-                styles={styles}
-                colors={colors}
-              />
-            )}
-            {activeTab === 'documents' && (
-              <ListTab
-                items={channelFiles}
-                loading={channelLoading}
-                loadingMore={tabLoadingMore}
-                onLoadMore={tabLoadMore}
-                emptyText="No documents found"
-                styles={styles}
-                colors={colors}
-                renderRow={item => (
-                  <TouchableOpacity key={item.id} style={styles.docItem}>
-                    <Ionicons
-                      name={
-                        getDocumentVisual(
-                          item.file_name,
-                          item.mime_type,
-                          colors.primary,
-                        ).icon
-                      }
-                      size={22}
-                      color={
-                        getDocumentVisual(
-                          item.file_name,
-                          item.mime_type,
-                          colors.primary,
-                        ).color
-                      }
-                      style={{ marginRight: 10 }}
-                    />
-                    <AppText style={styles.docText} numberOfLines={1}>
-                      {item.file_name || item.file_link}
-                    </AppText>
-                  </TouchableOpacity>
-                )}
-              />
-            )}
-          </View>
-        </>
-      )}
+          )}
+          {!channelError && activeTab !== 'documents' && !isLinksTab && (
+            <MediaTab
+              media={channelFiles}
+              onImagePress={handleMediaPress}
+              loading={channelLoading}
+              loadingMore={tabLoadingMore}
+              onLoadMore={tabLoadMore}
+              emptyText={`No ${activeTab} files found`}
+              styles={styles}
+              colors={colors}
+            />
+          )}
+          {!channelError && activeTab === 'documents' && (
+            <ListTab
+              items={channelFiles}
+              loading={channelLoading}
+              loadingMore={tabLoadingMore}
+              onLoadMore={tabLoadMore}
+              emptyText="No documents found"
+              styles={styles}
+              colors={colors}
+              renderRow={item => (
+                <TouchableOpacity key={item.id} style={styles.docItem}>
+                  <Ionicons
+                    name={
+                      getDocumentVisual(
+                        item.file_name,
+                        item.mime_type,
+                        colors.primary,
+                      ).icon
+                    }
+                    size={22}
+                    color={
+                      getDocumentVisual(
+                        item.file_name,
+                        item.mime_type,
+                        colors.primary,
+                      ).color
+                    }
+                    style={{ marginRight: 10 }}
+                  />
+                  <AppText style={styles.docText} numberOfLines={1}>
+                    {item.file_name || item.file_link}
+                  </AppText>
+                </TouchableOpacity>
+              )}
+            />
+          )}
+          {isLinksTab && (
+            <ChannelLinksTab
+              links={channelLinks}
+              loading={linksLoading}
+              error={linksError}
+              styles={styles}
+              colors={colors}
+            />
+          )}
+        </View>
+      </>
 
       <MediaPreviewModal
         visible={!!previewItem}
