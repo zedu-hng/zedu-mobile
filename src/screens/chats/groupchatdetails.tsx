@@ -40,6 +40,8 @@ import ChatBackground from '@/components/layout/chat/chat-background';
 import buzzService from '@/services/buzz.service';
 import { MessageAction } from '@/components/layout/group-chat/message-action';
 import { useMessageDraft } from '@/hooks/useMessageDraft';
+import StickyDateLabel from '@/components/layout/chat/sticky-date-label';
+import { useStickyDateLabel } from '@/hooks/useStickyDateLabel';
 
 const GroupChatDetailScreen = ({ navigation, route }: any) => {
   const { colors } = useTheme();
@@ -48,6 +50,13 @@ const GroupChatDetailScreen = ({ navigation, route }: any) => {
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
   const [_callLoading, setCallLoading] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const {
+    dateLabel,
+    listTop,
+    onListLayout,
+    onViewableItemsChanged,
+    viewabilityConfig,
+  } = useStickyDateLabel();
   const actionSheetRef = useRef<any>(null);
   const pickerSheetRef = useRef<any>(null);
   const mentionUserSheetRef = useRef<MentionUserBottomSheetRef>(null);
@@ -515,6 +524,9 @@ const GroupChatDetailScreen = ({ navigation, route }: any) => {
         ref={flatListRef}
         data={dmsChat}
         inverted
+        onLayout={onListLayout}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
         keyExtractor={item => item.thread_id}
         showsVerticalScrollIndicator={false}
         renderItem={({ item, index }) => (
@@ -556,6 +568,7 @@ const GroupChatDetailScreen = ({ navigation, route }: any) => {
           ) : null
         }
       />
+      <StickyDateLabel label={dateLabel} top={listTop} />
 
       <ChatKeyboardAvoidingView>
         {mentionState && (
