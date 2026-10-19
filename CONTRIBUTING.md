@@ -4,7 +4,7 @@ Zedu Mobile is the React Native app for iOS and Android. This guide covers how w
 
 The short version:
 
-> Approved ticket → ticket branch in your team's fork → test against the dev backend → **one PR** to `zedu-hng/zedu-mobile:dev` → your fork builds it → team lead approves → Zedu reviewers review with that build → squash merge → your team syncs.
+> Approved ticket → ticket branch in your team's fork → test against the live backend → **one PR** to `zedu-hng/zedu-mobile:dev` → your fork builds it → team lead approves → Zedu reviewers review with that build → squash merge → your team syncs.
 
 ## 1. Ground rules
 
@@ -36,7 +36,7 @@ Fork from **`zedu-hng/zedu-mobile`**, not from `zeduchat`. Otherwise your PRs an
 1. Fork `zedu-hng/zedu-mobile` into your team's GitHub org. Not a personal account: the org identifies your team.
 2. In the fork, go to **Actions** and enable workflows. Forks have them off by default, and your PR builds run there.
 3. Register your team: your lead sends a Zedu reviewer the org name and every lead's GitHub handle. Reviewers add them to [`teams.yml` in `zedu-hng/zedu-ci`](https://github.com/zedu-hng/zedu-ci/blob/main/teams.yml), one file for every Zedu repo, so a team registered for another repo is already set. Until then, your PRs fail **Lead approved**.
-4. Builds need no configuration: CI points them at the dev backend (§7). An `APP_ENV_FILE` variable left in the fork from earlier isn't read any more; delete it.
+4. Builds need no configuration: CI points them at the live backend (§7). An `APP_ENV_FILE` variable left in the fork from earlier isn't read any more; delete it.
 5. Each contributor clones the **team fork**:
 
    ```sh
@@ -45,7 +45,7 @@ Fork from **`zedu-hng/zedu-mobile`**, not from `zeduchat`. Otherwise your PRs an
    npm ci
    ```
 
-6. Create a local `.env` using the same keys as `env.d.ts`, pointed at the dev backend (the values CI uses are in [`build/zedu-mobile.env`](https://github.com/zedu-hng/zedu-ci/blob/main/build/zedu-mobile.env)). Never commit it.
+6. Create a local `.env` using the same keys as `env.d.ts`, pointed at the live backend (the values CI uses are in [`build/zedu-mobile.env`](https://github.com/zedu-hng/zedu-ci/blob/main/build/zedu-mobile.env)). Never commit it.
 7. Follow the [React Native environment setup](https://reactnative.dev/docs/set-up-your-environment), then run `npm run android` / `npm run ios` (see README).
 
 `npm ci` installs Husky git hooks. On commit, Prettier, ESLint, TypeScript and lint-staged run, and commitlint checks your message.
@@ -81,7 +81,7 @@ npm test               # Jest
 npm run security:audit
 ```
 
-Build and run the app on at least the platform your change touches: Android via `npm run android`, and iOS via `pod install` + `npm run ios` if you have a Mac. Test against the **dev backend** (`https://api.hng.groups.zedu.chat`), or your team's backend when the ticket needs backend work that isn't on dev yet (§7).
+Build and run the app on at least the platform your change touches: Android via `npm run android`, and iOS via `pod install` + `npm run ios` if you have a Mac. Test against the **live backend** (`https://api.zedu.chat`) with a test account, or your team's backend when the ticket needs backend work that isn't on dev yet (§7).
 
 **What tests you need:**
 
@@ -107,7 +107,7 @@ Dependency changes (`package.json`, lockfiles) are fine when the ticket needs th
 
 ## 7. How your PR gets built
 
-Your fork builds your PR on its own Actions minutes. Every build talks to the **dev backend**, `https://api.hng.groups.zedu.chat`, so reviewers test every PR against the same backend.
+Your fork builds your PR on its own Actions minutes. Every build talks to the **live backend**, `https://api.zedu.chat`, unless the PR body has a `Backend URL:` line. Reviewers use test accounts.
 
 - **Needs backend work that isn't on dev yet?** Add a line to the PR description, under **Backend**: `Backend URL: https://api.<team>.groups.zedu.chat`. Your build then uses that backend, and the **Backend dependency** check stays red until you delete the line, once the backend change is on dev. Adding, changing or deleting the line after a build makes **Fork build** fail until you re-run PR build in your fork, so the build always matches the description.
 - Nothing secret goes into a build: anything in `.env` ships inside the app.
