@@ -125,19 +125,19 @@ const AddOrganisationScreen = () => {
           </TouchableOpacity>
 
           <AppText variant="bold" size={28} style={styles.title}>
-            Create Your Organization
+            Create Your Organisation
           </AppText>
           <AppText size={16} style={styles.subtitle}>
-            Input the details of your organization below
+            Input the details of your organisation below
           </AppText>
 
           <View style={styles.formGroup}>
             <AppText size={15} style={styles.label}>
-              Organization Name
+              Organisation Name
             </AppText>
             <TextInput
               style={styles.input}
-              placeholder="Enter your organization Name"
+              placeholder="Enter your organisation Name"
               placeholderTextColor={colors.textMuted}
               value={orgName}
               onChangeText={setOrgName}
@@ -146,11 +146,11 @@ const AddOrganisationScreen = () => {
 
           <View style={styles.formGroup}>
             <AppText size={15} style={styles.label}>
-              Organization Type
+              Organisation Type
             </AppText>
             <TextInput
               style={styles.input}
-              placeholder="What does your organization do"
+              placeholder="What does your organisation do"
               placeholderTextColor={colors.textMuted}
               value={orgType}
               onChangeText={setOrgType}

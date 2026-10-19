@@ -31,6 +31,8 @@ import ThreadMessageItem from '@/components/layout/channels/thread-message-item'
 import { ShowNotify } from '@/components/ui/toast';
 import uuid from 'react-native-uuid';
 import ChatBackground from '@/components/layout/chat/chat-background';
+import StickyDateLabel from '@/components/layout/chat/sticky-date-label';
+import { useStickyDateLabel } from '@/hooks/useStickyDateLabel';
 
 const MentionThreadScreen = ({ navigation, route }: any) => {
   const { colors } = useTheme();
@@ -54,6 +56,16 @@ const MentionThreadScreen = ({ navigation, route }: any) => {
     selectedMsg: selectedMessage,
     channel: _channel,
   } = state;
+  const {
+    dateLabel,
+    listTop,
+    onListLayout,
+    onViewableItemsChanged,
+    viewabilityConfig,
+  } = useStickyDateLabel({
+    date: selectedMessage?.created_at,
+    lastIndex: (replyChat?.length ?? 0) - 1,
+  });
   const { thread_id, channel_id, mention } = route.params;
 
   const { loadMore, isFetchingMore } = UseReplyChat({
@@ -220,6 +232,9 @@ const MentionThreadScreen = ({ navigation, route }: any) => {
         ref={flatListRef}
         data={replyChat}
         inverted
+        onLayout={onListLayout}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
         keyExtractor={item => String(item.id ?? item.message_id)}
         extraData={replyChat}
         renderItem={({ item, index }) => (
@@ -251,6 +266,7 @@ const MentionThreadScreen = ({ navigation, route }: any) => {
           ) : null
         }
       />
+      <StickyDateLabel label={dateLabel} top={listTop} />
 
       {selectedMsg && (
         <MessageAction
