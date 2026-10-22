@@ -2,7 +2,7 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { GOOGLE_CLIENT_ID } from '@env';
 
 // Without a web client ID, GoogleSignin.configure throws and takes the auth screen down with it.
-const isGoogleSignInAvailable = Boolean(GOOGLE_CLIENT_ID);
+export const isGoogleSignInAvailable = Boolean(GOOGLE_CLIENT_ID);
 
 export const configureGoogleSignIn = () => {
   if (!isGoogleSignInAvailable) {

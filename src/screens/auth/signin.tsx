@@ -11,7 +11,11 @@ import { AppText } from '@/components/ui/text';
 import { AppInput } from '@/components/ui/input';
 import { AppButton } from '@/components/ui/button';
 import { useNavigation } from '@react-navigation/native';
-import { configureGoogleSignIn, signInWithGoogle } from '@/lib/google-auth';
+import {
+  configureGoogleSignIn,
+  isGoogleSignInAvailable,
+  signInWithGoogle,
+} from '@/lib/google-auth';
 import { signInWithApple } from '@/lib/apple-auth';
 import { PostRequest } from '@/utils/requests';
 import { useDataContext } from '@/store/useDataContext';
@@ -160,21 +164,23 @@ const SigninScreen: React.FC = () => {
           Login to Zedu
         </AppText>
 
-        <TouchableOpacity
-          style={styles.socialBtn}
-          activeOpacity={0.8}
-          onPress={handleGoogleLogin}
-          disabled={googleLoading}
-        >
-          <Image
-            source={require('@/assets/google-icon.png')}
-            style={styles.socialIcon}
-          />
-          <AppText variant="medium" size={16}>
-            Sign in with Google
-          </AppText>
-          {googleLoading && <ActivityIndicator />}
-        </TouchableOpacity>
+        {isGoogleSignInAvailable && (
+          <TouchableOpacity
+            style={styles.socialBtn}
+            activeOpacity={0.8}
+            onPress={handleGoogleLogin}
+            disabled={googleLoading}
+          >
+            <Image
+              source={require('@/assets/google-icon.png')}
+              style={styles.socialIcon}
+            />
+            <AppText variant="medium" size={16}>
+              Sign in with Google
+            </AppText>
+            {googleLoading && <ActivityIndicator />}
+          </TouchableOpacity>
+        )}
         {Platform.OS === 'ios' && (
           <TouchableOpacity
             style={styles.socialBtn}

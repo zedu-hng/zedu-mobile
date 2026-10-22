@@ -221,11 +221,8 @@ export const AppNavigator = ({ currentRoute }: AppNavigatorProps) => {
     isInitializedRef.current && hasTokenRef.current;
 
   useEffect(() => {
-    if (isFcmPlatform) {
-      requestAndroidNotificationPermission().catch(() => {});
-    } else {
+    if (!isFcmPlatform) {
       OneSignal.initialize(ONESIGNAL_APP_ID);
-      OneSignal.Notifications.requestPermission(true);
     }
 
     const isDirectCallNotification = (notification: any) => {
@@ -650,9 +647,13 @@ export const AppNavigator = ({ currentRoute }: AppNavigatorProps) => {
           dispatch({ type: ACTIONS.USER, payload: user });
           // Signed-in launch skips the welcome screen, so ask here. On a signed-out launch the welcome
           // screen asks after camera/audio, so two permission dialogs never open at the same time.
-          OneSignal.Notifications.requestPermission(true).catch(
-            () => undefined,
-          );
+          if (isFcmPlatform) {
+            requestAndroidNotificationPermission().catch(() => undefined);
+          } else {
+            OneSignal.Notifications.requestPermission(true).catch(
+              () => undefined,
+            );
+          }
         }
       } finally {
         setInitializing(false);
