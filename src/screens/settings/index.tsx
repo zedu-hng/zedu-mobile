@@ -39,12 +39,14 @@ const SettingsHome = () => {
     title,
     subtitle,
     onPress,
+    showChevron = true,
     isDestructive = false,
   }: {
     icon: string;
     title: string;
     subtitle?: string;
     onPress?: () => void;
+    showChevron?: boolean;
     isDestructive?: boolean;
   }) => (
     <TouchableOpacity
@@ -55,8 +57,8 @@ const SettingsHome = () => {
       <View style={styles.iconContainer}>
         <Ionicons
           name={icon}
-          size={22}
-          color={isDestructive ? colors.error : colors.iconDefault}
+          size={20}
+          color={isDestructive ? colors.error : colors.primary}
         />
       </View>
       <View style={styles.textContainer}>
@@ -68,8 +70,8 @@ const SettingsHome = () => {
         </AppText>
         {subtitle && <AppText style={styles.itemSubtitle}>{subtitle}</AppText>}
       </View>
-      {!isDestructive && (
-        <Ionicons name="chevron-forward" size={18} color={colors.iconMuted} />
+      {showChevron && (
+        <Ionicons name="chevron-forward" size={16} color={colors.iconMuted} />
       )}
     </TouchableOpacity>
   );
@@ -230,7 +232,7 @@ const SettingsHome = () => {
           <SectionHeader title="Privacy & Security" />
           <View style={styles.groupCard}>
             <SettingItem
-              icon="lock-closed-outline"
+              icon="shield-checkmark-outline"
               title="Security"
               subtitle="Edit your security preferences"
               onPress={() =>
@@ -239,7 +241,7 @@ const SettingsHome = () => {
             />
             <View style={styles.divider} />
             <SettingItem
-              icon="lock-closed"
+              icon="key-outline"
               title="Change Password"
               subtitle="Update your password"
               onPress={() =>
@@ -250,22 +252,23 @@ const SettingsHome = () => {
             />
           </View>
 
-          <View style={[styles.groupCard, { marginTop: 24 }]}>
+          <SectionHeader title="Account" />
+          <View style={styles.groupCard}>
             <SettingItem
               icon="log-out-outline"
               title="Sign out"
-              isDestructive
+              showChevron={false}
               onPress={() => setLogoutModalVisible(true)}
             />
           </View>
 
-          <View style={styles.divider} />
-
-          <View style={[styles.groupCard, { marginTop: 24, marginBottom: 40 }]}>
+          <View style={[styles.groupCard, styles.dangerCard]}>
             <SettingItem
-              icon="trash"
-              title="Delete Account"
+              icon="trash-outline"
+              title="Delete account"
+              subtitle="Permanently deletes your account and data"
               isDestructive
+              showChevron={false}
               onPress={() =>
                 navigation.navigate('SettingStack', { screen: 'DeleteAccount' })
               }
