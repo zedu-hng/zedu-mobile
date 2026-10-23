@@ -1,3 +1,4 @@
+import { openReportProblem } from '@/utils/report-problem';
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { hasPermission } from '@/lib/role-permissions';
 import { View, ScrollView, TouchableOpacity } from 'react-native';
@@ -249,6 +250,16 @@ const SettingsHome = () => {
                   screen: 'ChangePassword',
                 })
               }
+            />
+          </View>
+
+          <SectionHeader title="Help" />
+          <View style={styles.groupCard}>
+            <SettingItem
+              icon="bug-outline"
+              title="Report a problem"
+              subtitle="Email the team with your app details"
+              onPress={openReportProblem}
             />
           </View>
 

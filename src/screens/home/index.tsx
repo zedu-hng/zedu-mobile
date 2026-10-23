@@ -8,6 +8,7 @@ import {
   FlatList,
   ActivityIndicator,
 } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { ThemedRefreshControl } from '@/components/ui/themed-refresh-control';
 import { AppText } from '@/components/ui/text';
 import { normalize } from '@/utils/normalize';
@@ -192,6 +193,17 @@ const HomeScreen = () => {
           />
           {loading && search.length > 0 && (
             <ActivityIndicator size="small" color={colors.white} />
+          )}
+          {search.length > 0 && (
+            <TouchableOpacity
+              onPress={() => setSearch('')}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="Clear search"
+              style={styles.searchClear}
+            >
+              <Ionicons name="close-circle" size={18} color={colors.white} />
+            </TouchableOpacity>
           )}
         </View>
       </View>

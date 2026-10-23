@@ -713,6 +713,10 @@ export const parseMessageTextWithLinks = (
 
 const MENTION_SPAN_REGEX = /<span[^>]*data-label="([^"]*)"[^>]*>.*?<\/span>/gi;
 
+/** True when the next thing after a mention, skipping formatting tags, is another mention. */
+const NEXT_IS_MENTION_REGEX =
+  /^(?:<(?!span)\/?[a-z][^>]*>)*<span[^>]*data-label=/i;
+
 /** Plain-text message body for clipboard (mentions as @label, HTML stripped). */
 export const getPlainMessageText = (html: string): string => {
   if (!html) {
@@ -721,7 +725,15 @@ export const getPlainMessageText = (html: string): string => {
 
   return decodeHtmlEntities(
     html
-      .replace(MENTION_SPAN_REGEX, '@$1')
+      // Keep a space between two mentions in a row (even with formatting tags
+      // between them) so "@a@b" does not read like a single handle.
+      .replace(
+        MENTION_SPAN_REGEX,
+        (match: string, label: string, offset: number, source: string) =>
+          NEXT_IS_MENTION_REGEX.test(source.slice(offset + match.length))
+            ? `@${label} `
+            : `@${label}`,
+      )
       .replace(ANCHOR_REGEX, (_, url: string, label: string) => {
         const text = stripHtmlTags(label).trim();
         return text || url;

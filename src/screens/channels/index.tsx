@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
   Image,
@@ -14,7 +14,7 @@ import { normalize } from '@/utils/normalize';
 import Container from '@/components/layout/container';
 import { useTheme } from '@/theme/ThemeProvider';
 import { createChatListStyles } from '@/theme/createChatListStyles';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5';
 import Feather from 'react-native-vector-icons/Feather';
 import ChannelOnboardingSheet from './channel-onboarding';
@@ -40,6 +40,14 @@ const ChannelHome = () => {
   const { channels, loadingMore, refresh, loadMore } = useChannels(
     orgId,
     search,
+  );
+
+  // The channel list lives in shared state that other screens refill with the
+  // full list, so clear the search when leaving to keep the box and list in sync.
+  useFocusEffect(
+    useCallback(() => {
+      return () => setSearch('');
+    }, []),
   );
 
   const onboardingSheetRef = useRef<any>(null);
