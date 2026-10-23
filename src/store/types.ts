@@ -9,6 +9,8 @@ import { ThreadListItem } from '@/types/thread';
  * Grouped by feature domain
  */
 export enum ACTIONS {
+  // Returns the whole state to its initial values (used on sign-out).
+  RESET_STATE = 'RESET_STATE',
   // === AUTH & GLOBAL ===
   TOKEN = 'TOKEN',
   USER = 'USER',
@@ -539,8 +541,11 @@ interface MentionUserAction {
 /**
  * 3. EXPORTED ACTION UNION
  */
+export type ResetStateAction = { type: ACTIONS.RESET_STATE };
+
 export type Action =
   // Global
+  | ResetStateAction
   | TokenAction
   | UserAction
   | SuccessAction

@@ -1,5 +1,6 @@
 import { Chat, Group, Participant } from '@/types/chats';
 import { ACTIONS, Action } from './types';
+import { initialAppState } from './initial-state';
 import { OrgMembers } from '@/types/organisation';
 import { Channel, ChannelChat } from '@/types/channel';
 import { Agent } from '@/types/agents';
@@ -89,6 +90,8 @@ export interface AppState {
 
 const reducers = (state: AppState, action: Action): AppState => {
   switch (action.type) {
+    case ACTIONS.RESET_STATE:
+      return initialAppState;
     case ACTIONS.USER:
       return { ...state, user: action.payload };
     case ACTIONS.TOKEN:
