@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactTestRenderer, { act } from 'react-test-renderer';
-import { Text } from 'react-native';
+import { Platform, Text } from 'react-native';
 import * as googleAuth from '@/lib/google-auth';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 import SigninScreen from '../signin';
@@ -24,9 +24,15 @@ jest.mock('@/store/useDataContext', () => ({
 
 afterEach(() => jest.restoreAllMocks());
 
-it.each([true, false])(
-  'only offers Google authentication when configured (%s)',
-  async available => {
+it.each([
+  ['android', true],
+  ['android', false],
+  ['ios', true],
+  ['ios', false],
+] as const)(
+  'only offers configured social authentication (%s, Google: %s)',
+  async (platform, available) => {
+    jest.replaceProperty(Platform, 'OS', platform);
     jest.replaceProperty(googleAuth, 'isGoogleSignInAvailable', available);
     for (const [Screen, label] of [
       [SigninScreen, 'Sign in with Google'],
@@ -45,6 +51,7 @@ it.each([true, false])(
         .map(node => node.props.children);
       await act(async () => renderer.unmount());
       expect(labels.includes(label)).toBe(available);
+      expect(labels.includes('OR')).toBe(available || platform === 'ios');
     }
   },
   30000,

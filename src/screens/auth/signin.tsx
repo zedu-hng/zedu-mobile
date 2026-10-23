@@ -199,13 +199,15 @@ const SigninScreen: React.FC = () => {
           </TouchableOpacity>
         )}
 
-        <View style={styles.dividerContainer}>
-          <View style={styles.line} />
-          <AppText size={14} style={styles.orText}>
-            OR
-          </AppText>
-          <View style={styles.line} />
-        </View>
+        {(isGoogleSignInAvailable || Platform.OS === 'ios') && (
+          <View style={styles.dividerContainer}>
+            <View style={styles.line} />
+            <AppText size={14} style={styles.orText}>
+              OR
+            </AppText>
+            <View style={styles.line} />
+          </View>
+        )}
 
         <AppInput
           label="Email Address"
