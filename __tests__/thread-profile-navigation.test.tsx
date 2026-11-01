@@ -201,6 +201,19 @@ describe('thread profile navigation', () => {
     },
   );
 
+  it('does not navigate when the message has no valid author ID', () => {
+    const navigation = { navigate: jest.fn() };
+
+    navigateToThreadProfile(
+      navigation,
+      { ...profileParticipant, user_id: '   ' },
+      channelId,
+      { container: 'channel', conversationType: 'channel' },
+    );
+
+    expect(navigation.navigate).not.toHaveBeenCalled();
+  });
+
   it.each([
     ['channel mention', 'channel', 'ChannelStack', 'UserDetails'],
     ['DM mention', 'DM', 'ChatStack', 'UserDetailScreen'],
@@ -247,6 +260,40 @@ describe('thread profile navigation', () => {
     act(() => avatar.props.onLongPress());
     expect(onMentionUser).toHaveBeenCalledWith(message.user_id);
     act(() => username.props.onLongPress());
+    expect(onLongPress).toHaveBeenCalledWith(message);
+    act(() => tree.unmount());
+  });
+
+  it('does not open a profile from the message body and preserves long-press actions', () => {
+    const onOpenProfile = jest.fn();
+    const onLongPress = jest.fn();
+    const { tree } = renderProfilePressTargets(
+      <ThreadMessageItem
+        item={message}
+        index={0}
+        messages={[message]}
+        onLongPress={onLongPress}
+        onMentionUser={jest.fn()}
+        onOpenProfile={onOpenProfile}
+      />,
+    );
+    const messageBody = tree.root
+      .findAllByType(TouchableOpacity)
+      .find(
+        target =>
+          target.props.accessibilityRole !== 'button' &&
+          typeof target.props.onLongPress === 'function',
+      );
+
+    expect(messageBody).toBeDefined();
+    if (!messageBody) {
+      throw new Error('Expected the message body touch target to render');
+    }
+
+    act(() => messageBody.props.onPress?.());
+    expect(onOpenProfile).not.toHaveBeenCalled();
+
+    act(() => messageBody.props.onLongPress());
     expect(onLongPress).toHaveBeenCalledWith(message);
     act(() => tree.unmount());
   });

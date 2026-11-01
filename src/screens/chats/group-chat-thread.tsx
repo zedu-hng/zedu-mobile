@@ -24,6 +24,7 @@ import {
   getThreadMessageCallbackAction,
   getThreadMessageSendUrl,
 } from '@/utils/thread-message';
+import { navigateToThreadProfile } from '@/navigation/thread-profile-navigation';
 import { ReplyMessageAction } from '@/components/layout/chat/reply-message-action';
 import { ShowNotify } from '@/components/ui/toast';
 import uuid from 'react-native-uuid';
@@ -207,9 +208,9 @@ const GroupChatThreadScreen = ({ navigation, route }: any) => {
   };
 
   const handleOpenProfile = (item: ChannelChat) => {
-    navigation.navigate('GroupUserDetailScreen', {
-      participant: item,
-      channel_id,
+    navigateToThreadProfile(navigation, item, channel_id, {
+      container: 'chat',
+      conversationType: 'group_dm',
     });
   };
 

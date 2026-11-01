@@ -49,6 +49,7 @@ const ThreadMessageItem = ({
     string | null
   >(null);
   const avatarUrl = getThreadMessageAvatarUrl(item);
+  const profileName = item.username || item.full_name || 'user';
   const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | undefined>();
   const useFallbackAvatar = !avatarUrl || failedAvatarUrl === avatarUrl;
 
@@ -206,9 +207,7 @@ const ThreadMessageItem = ({
           activeOpacity={0.8}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel={`Open ${
-            item.username || item.full_name || 'user'
-          }'s profile`}
+          accessibilityLabel={`Open ${profileName}'s profile`}
           accessibilityHint={
             onMentionUser ? 'Long press to mention this user' : undefined
           }
@@ -239,9 +238,9 @@ const ThreadMessageItem = ({
               <View style={styles.senderRow}>
                 <TouchableOpacity
                   activeOpacity={0.8}
-                  hitSlop={4}
+                  hitSlop={{ top: 14, bottom: 14, left: 4, right: 4 }}
                   accessibilityRole="button"
-                  accessibilityLabel={`Open ${item.username}'s profile`}
+                  accessibilityLabel={`Open ${profileName}'s profile`}
                   onPress={handleOpenProfile}
                   onLongPress={() => handlePress(item)}
                   delayLongPress={200}

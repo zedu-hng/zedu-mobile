@@ -32,6 +32,13 @@ export const navigateToThreadProfile = (
   channelId: string,
   { container, conversationType }: ThreadProfileNavigationOptions,
 ) => {
+  if (
+    typeof participant?.user_id !== 'string' ||
+    participant.user_id.trim().length === 0
+  ) {
+    return;
+  }
+
   const params = { participant, channel_id: channelId };
   const screen =
     conversationType === 'channel'

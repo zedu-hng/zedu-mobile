@@ -31,6 +31,7 @@ const ThreadItem = ({
   const styles = useMemo(() => createThreadItemStyles(colors), [colors]);
   const [viewerVisible, setViewerVisible] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
+  const profileName = item.username || item.full_name || 'user';
 
   const getFileTheme = (fileName: string) => {
     const ext = fileName?.split('.').pop()?.toLowerCase();
@@ -150,9 +151,7 @@ const ThreadItem = ({
         activeOpacity={0.8}
         hitSlop={8}
         accessibilityRole="button"
-        accessibilityLabel={`Open ${
-          item.username || item.full_name || 'user'
-        }'s profile`}
+        accessibilityLabel={`Open ${profileName}'s profile`}
         accessibilityHint={
           onMentionUser ? 'Long press to mention this user' : undefined
         }
@@ -172,9 +171,9 @@ const ThreadItem = ({
             <View style={styles.senderRow}>
               <TouchableOpacity
                 activeOpacity={0.8}
-                hitSlop={4}
+                hitSlop={{ top: 14, bottom: 14, left: 4, right: 4 }}
                 accessibilityRole="button"
-                accessibilityLabel={`Open ${item.username}'s profile`}
+                accessibilityLabel={`Open ${profileName}'s profile`}
                 onPress={handleOpenProfile}
                 style={styles.senderNameTouchable}
               >
