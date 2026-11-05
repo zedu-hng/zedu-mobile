@@ -8,6 +8,7 @@ import {
   FlatList,
   ActivityIndicator,
 } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { ThemedRefreshControl } from '@/components/ui/themed-refresh-control';
 import { AppText } from '@/components/ui/text';
 import { normalize } from '@/utils/normalize';
@@ -31,6 +32,10 @@ import { PostRequest, PutRequest } from '@/utils/requests';
 import { RootStackParamList } from '@/navigation/navigator';
 import { UserAvatarWithStatus } from '@/components/ui/user-avatar-with-status';
 import { formatPreviewMessage } from '@/utils/message-text';
+import {
+  isFcmPlatform,
+  registerAndroidPushDevice,
+} from '@/services/push-notifications.service';
 
 const HomeScreen = () => {
   const navigation = useNavigation<DrawerNavigationProp<RootStackParamList>>();
@@ -56,6 +61,22 @@ const HomeScreen = () => {
   ];
 
   useEffect(() => {
+    if (isFcmPlatform) {
+      let unsubscribe: () => void = () => {};
+      let cancelled = false;
+      registerAndroidPushDevice().then(unsub => {
+        if (cancelled) {
+          unsub();
+        } else {
+          unsubscribe = unsub;
+        }
+      });
+      return () => {
+        cancelled = true;
+        unsubscribe();
+      };
+    }
+
     const getData = async () => {
       OneSignal.initialize(ONESIGNAL_APP_ID);
       const deviceToken = await OneSignal.User.pushSubscription.getIdAsync();
@@ -192,6 +213,17 @@ const HomeScreen = () => {
           />
           {loading && search.length > 0 && (
             <ActivityIndicator size="small" color={colors.white} />
+          )}
+          {search.length > 0 && (
+            <TouchableOpacity
+              onPress={() => setSearch('')}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="Clear search"
+              style={styles.searchClear}
+            >
+              <Ionicons name="close-circle" size={18} color={colors.white} />
+            </TouchableOpacity>
           )}
         </View>
       </View>

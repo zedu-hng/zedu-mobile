@@ -9,6 +9,7 @@ import {
   InteractionManager,
 } from 'react-native';
 import EmojiPicker, { EmojiType } from 'rn-emoji-keyboard';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { AppText } from '@/components/ui/text';
 import { useTheme } from '@/theme/ThemeProvider';
 import {
@@ -130,6 +131,7 @@ export const MessageAction = forwardRef<
   const ActionItem = ({
     label,
     icon,
+    iconName,
     isDestructive,
     handleClick,
     isLoading,
@@ -148,6 +150,12 @@ export const MessageAction = forwardRef<
       >
         {isLoading ? (
           <ActivityIndicator size="small" color={colors.error} />
+        ) : iconName ? (
+          <Ionicons
+            name={iconName}
+            size={20}
+            color={isDestructive ? colors.error : colors.textPrimary}
+          />
         ) : (
           <Image
             source={icon}
@@ -349,7 +357,7 @@ export const MessageAction = forwardRef<
               {item?.user_id === state?.user?.user_id && (
                 <ActionItem
                   label="Edit Message"
-                  icon={require('@/assets/icons/edit-message.png')}
+                  iconName="create-outline"
                   handleClick={handleEdit}
                 />
               )}
@@ -389,7 +397,7 @@ export const MessageAction = forwardRef<
               />
               <ActionItem
                 label="Cancel"
-                icon={require('@/assets/icons/emoji.png')}
+                icon={require('@/assets/icons/close.png')}
                 handleClick={() => setMode('actions')}
               />
             </View>
