@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { GetRequest, buildQueryString } from '@/utils/requests';
 
 export type ChannelFileMediaItem = {
@@ -81,13 +81,19 @@ export const useChannelFiles = (channelId?: string, fileCategory?: string) => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const requestGenerationRef = useRef(0);
 
   useEffect(() => {
+    const generation = ++requestGenerationRef.current;
+    const isCurrent = () => generation === requestGenerationRef.current;
+
     const load = async () => {
       setFiles([]);
       setError(null);
       setPage(1);
       setHasMore(false);
+      setLoading(true);
+      setLoadingMore(false);
 
       const query = buildQueryString({
         page: 1,
@@ -95,9 +101,24 @@ export const useChannelFiles = (channelId?: string, fileCategory?: string) => {
         type: fileCategory || undefined,
       });
 
-      const { data: response } = await GetRequest<ChannelFilesResponse>(
-        `/channels/${channelId}/files?${query}`,
-      );
+      const { data: response, error: fetchError } =
+        await GetRequest<ChannelFilesResponse>(
+          `/channels/${channelId}/files?${query}`,
+        );
+
+      // Another tab has been opened since this request started; its response
+      // owns the list now, so this one must not touch the state.
+      if (!isCurrent()) {
+        return;
+      }
+
+      if (fetchError) {
+        setError(
+          typeof fetchError === 'string' ? fetchError : 'Failed to load files',
+        );
+        setLoading(false);
+        return;
+      }
 
       if (response) {
         const flattened = normalizeChannelFilesData(response.data);
@@ -110,14 +131,20 @@ export const useChannelFiles = (channelId?: string, fileCategory?: string) => {
         setFiles(flattened);
         setPage(currentPageNum);
         setHasMore(currentPageNum < totalPages);
-
-        setLoading(false);
-      } else {
-        setLoading(false);
       }
+
+      setLoading(false);
     };
 
     load();
+
+    return () => {
+      // Invalidate this request even when the next one is for the same tab,
+      // so a late response cannot overwrite a newer one.
+      if (requestGenerationRef.current === generation) {
+        requestGenerationRef.current += 1;
+      }
+    };
   }, [channelId, fileCategory]);
 
   const loadMore = useCallback(async () => {
@@ -125,6 +152,7 @@ export const useChannelFiles = (channelId?: string, fileCategory?: string) => {
       return;
     }
 
+    const generation = requestGenerationRef.current;
     setLoadingMore(true);
 
     const nextPage = page + 1;
@@ -139,6 +167,12 @@ export const useChannelFiles = (channelId?: string, fileCategory?: string) => {
         `/channels/${channelId}/files?${query}`,
       );
 
+    // The tab changed while this page was loading; its files do not belong
+    // to the list that is on screen now.
+    if (generation !== requestGenerationRef.current) {
+      return;
+    }
+
     if (!fetchError && response) {
       const flattened = normalizeChannelFilesData(response.data);
       const pagination = response.pagination;
@@ -150,8 +184,9 @@ export const useChannelFiles = (channelId?: string, fileCategory?: string) => {
       setFiles(prev => [...prev, ...flattened]);
       setPage(currentPageNum);
       setHasMore(currentPageNum < totalPages);
-      setLoadingMore(false);
     }
+
+    setLoadingMore(false);
   }, [channelId, fileCategory, hasMore, loading, loadingMore, page]);
 
   return {
