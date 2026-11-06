@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { ACTIONS } from '@/store/types';
 import { useDataContext } from '@/store/useDataContext';
 import { GetRequest } from '@/utils/requests';
@@ -14,18 +14,31 @@ const UseGroupChatDetails = ({ channel_id }: Props) => {
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
+  // Channel whose messages are currently loaded in the store by this hook.
+  const loadedChannelRef = useRef<string | null>(null);
+
   const fetchFirstPage = useCallback(async () => {
     const { data } = await GetRequest(
       `/group-dms/channels/${channel_id}/threads?page=1&limit=50`,
     );
     if (data) {
+      // Re-focusing the same chat (e.g. back navigation): refresh the newest
+      // page in place rather than resetting the list to page 1, which would
+      // drop older loaded pages and lose the scroll position.
+      const isRefresh = loadedChannelRef.current === channel_id;
+      loadedChannelRef.current = channel_id;
       dispatch({
         type: ACTIONS.DMS_CHAT,
         payload: {
           data: data.data,
           page: 1,
+          merge: isRefresh,
         },
       });
+
+      if (isRefresh) {
+        return;
+      }
 
       setPage(1);
       const paginationDetails = data.pagination?.[0];
