@@ -232,6 +232,33 @@ const reducers = (state: AppState, action: Action): AppState => {
         };
       }
 
+      // Refresh of page 1 for a channel that is already loaded (e.g. returning
+      // to the chat via back navigation): merge the fresh first page into the
+      // list instead of replacing it, so older pages the user already loaded
+      // (and therefore their scroll position) are kept.
+      if (action.payload.page === 1 && action.payload.merge) {
+        const incoming: any[] = action.payload.data || [];
+        if (incoming.length === 0) {
+          return state;
+        }
+        const incomingIds = new Set(incoming.map((m: any) => m.thread_id));
+        const oldestIncoming = incoming.reduce((min: number, m: any) => {
+          const t = new Date(m.created_at).getTime();
+          return Number.isNaN(t) ? min : Math.min(min, t);
+        }, Number.POSITIVE_INFINITY);
+        // Keep only already-loaded messages older than the refreshed window;
+        // anything inside the window is authoritative from the server
+        // (this also drops messages deleted since the last fetch).
+        const olderLoaded = state.dmsChat.filter((m: any) => {
+          if (m.isOptimistic || incomingIds.has(m.thread_id)) {
+            return false;
+          }
+          const t = new Date(m.created_at).getTime();
+          return !Number.isNaN(t) && t < oldestIncoming;
+        });
+        return { ...state, dmsChat: [...incoming, ...olderLoaded] };
+      }
+
       // Pagination logic with double-check filter
       return {
         ...state,
