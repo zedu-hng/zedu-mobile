@@ -19,11 +19,7 @@ import { validateSignup } from '@/utils/validation';
 import Container from '@/components/layout/container';
 import { PostRequest } from '@/utils/requests';
 import { storeMultipleData } from '@/utils/helper';
-import {
-  configureGoogleSignIn,
-  isGoogleSignInAvailable,
-  signInWithGoogle,
-} from '@/lib/google-auth';
+import { configureGoogleSignIn, signInWithGoogle } from '@/lib/google-auth';
 import { signInWithApple } from '@/lib/apple-auth';
 import { useTheme } from '@/theme/ThemeProvider';
 import { createAuthStyles } from '@/theme/createScreenStyles';
@@ -300,21 +296,19 @@ const SignupScreen: React.FC = () => {
           </View>
         ) : (
           <View key="ind-form">
-            {isGoogleSignInAvailable && (
-              <TouchableOpacity
-                style={styles.socialBtn}
-                onPress={handleGoogleLogin}
-                disabled={googleLoading}
-              >
-                <Image
-                  source={require('@/assets/google-icon.png')}
-                  style={styles.socialIcon}
-                />
-                <AppText variant="medium" size={16}>
-                  Sign up with Google
-                </AppText>
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity
+              style={styles.socialBtn}
+              onPress={handleGoogleLogin}
+              disabled={googleLoading}
+            >
+              <Image
+                source={require('@/assets/google-icon.png')}
+                style={styles.socialIcon}
+              />
+              <AppText variant="medium" size={16}>
+                Sign up with Google
+              </AppText>
+            </TouchableOpacity>
             {Platform.OS === 'ios' && (
               <TouchableOpacity
                 style={styles.socialBtn}
@@ -332,15 +326,13 @@ const SignupScreen: React.FC = () => {
               </TouchableOpacity>
             )}
 
-            {(isGoogleSignInAvailable || Platform.OS === 'ios') && (
-              <View style={styles.dividerContainer}>
-                <View style={styles.line} />
-                <AppText size={14} style={styles.orText}>
-                  OR
-                </AppText>
-                <View style={styles.line} />
-              </View>
-            )}
+            <View style={styles.dividerContainer}>
+              <View style={styles.line} />
+              <AppText size={14} style={styles.orText}>
+                OR
+              </AppText>
+              <View style={styles.line} />
+            </View>
 
             <AppInput
               label="Email Address"
