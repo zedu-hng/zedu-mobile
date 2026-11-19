@@ -230,8 +230,6 @@ interface DmsChatAction {
     newMessage?: any;
     data?: any[];
     page?: number;
-    /** With page 1: merge into the loaded list instead of replacing it. */
-    merge?: boolean;
   };
 }
 
