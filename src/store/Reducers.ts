@@ -232,33 +232,6 @@ const reducers = (state: AppState, action: Action): AppState => {
         };
       }
 
-      // Refresh of page 1 for a channel that is already loaded (e.g. returning
-      // to the chat via back navigation): merge the fresh first page into the
-      // list instead of replacing it, so older pages the user already loaded
-      // (and therefore their scroll position) are kept.
-      if (action.payload.page === 1 && action.payload.merge) {
-        const incoming: any[] = action.payload.data || [];
-        if (incoming.length === 0) {
-          return state;
-        }
-        const incomingIds = new Set(incoming.map((m: any) => m.thread_id));
-        const oldestIncoming = incoming.reduce((min: number, m: any) => {
-          const t = new Date(m.created_at).getTime();
-          return Number.isNaN(t) ? min : Math.min(min, t);
-        }, Number.POSITIVE_INFINITY);
-        // Keep only already-loaded messages older than the refreshed window;
-        // anything inside the window is authoritative from the server
-        // (this also drops messages deleted since the last fetch).
-        const olderLoaded = state.dmsChat.filter((m: any) => {
-          if (m.isOptimistic || incomingIds.has(m.thread_id)) {
-            return false;
-          }
-          const t = new Date(m.created_at).getTime();
-          return !Number.isNaN(t) && t < oldestIncoming;
-        });
-        return { ...state, dmsChat: [...incoming, ...olderLoaded] };
-      }
-
       // Pagination logic with double-check filter
       return {
         ...state,
@@ -296,6 +269,32 @@ const reducers = (state: AppState, action: Action): AppState => {
         ),
       };
 
+    case ACTIONS.UPDATE_DM_PIN: {
+      const { threadId, is_pin, details } = action.payload;
+      const selectedMsg =
+        state.selectedMsg?.thread_id === threadId
+          ? {
+              ...state.selectedMsg,
+              is_pinned: is_pin,
+              pinned_details: details,
+            }
+          : state.selectedMsg;
+
+      return {
+        ...state,
+        selectedMsg,
+        dmsChat: state.dmsChat.map(message =>
+          message.thread_id === threadId
+            ? {
+                ...message,
+                is_pinned: is_pin,
+                pinned_details: details,
+              }
+            : message,
+        ),
+      };
+    }
+
     case ACTIONS.RESET_DM_THREAD_COUNT:
       return {
         ...state,
@@ -305,6 +304,37 @@ const reducers = (state: AppState, action: Action): AppState => {
             : chat,
         ),
       };
+
+    case ACTIONS.UPDATE_USER_PRESENCE: {
+      const { user_id, online } = action.payload;
+      const isTarget = (person: any) =>
+        person &&
+        String(person.user_id ?? person.id) === String(user_id) &&
+        person.online !== online;
+      const patch = (people: any) =>
+        Array.isArray(people) && people.some(isTarget)
+          ? people.map(person =>
+              isTarget(person) ? { ...person, online } : person,
+            )
+          : people;
+
+      const dms = state.dms.map(chat => {
+        const participants = patch(chat.participants);
+        return participants === chat.participants
+          ? chat
+          : { ...chat, participants };
+      });
+      const participant = patch(state.participant);
+
+      if (
+        participant === state.participant &&
+        dms.every((chat, i) => chat === state.dms[i])
+      ) {
+        return state;
+      }
+
+      return { ...state, dms, participant };
+    }
 
     case ACTIONS.UPDATE_DM_COUNT:
       return {
@@ -333,12 +363,18 @@ const reducers = (state: AppState, action: Action): AppState => {
         // Remove from current position
         currentDms.splice(dmIndex, 1);
 
+        // Keep conversation identity from the list row. Centrifugo unread payloads
+        // often carry the message sender's avatar/username and would flash the
+        // wrong (e.g. logged-in) user on the home list until silent sync.
         const updatedDm = {
           ...existingDm,
           ...updateData,
           thread_count: updateData.thread_count ?? existingDm.thread_count,
           preview_message:
             updateData.preview_message ?? existingDm.preview_message,
+          avatar_url: existingDm.avatar_url,
+          default_avatar_url: existingDm.default_avatar_url,
+          username: existingDm.username,
           ...(Array.isArray(updateData.participants) && {
             participants: updateData.participants,
           }),
@@ -652,6 +688,32 @@ const reducers = (state: AppState, action: Action): AppState => {
       };
     }
 
+    case ACTIONS.UPDATE_CHANNEL_PIN: {
+      const { threadId, is_pin, details } = action.payload;
+      const selectedMsg =
+        state.selectedMsg?.thread_id === threadId
+          ? {
+              ...state.selectedMsg,
+              is_pinned: is_pin,
+              pinned_details: details,
+            }
+          : state.selectedMsg;
+
+      return {
+        ...state,
+        selectedMsg,
+        channelsChat: state.channelsChat.map(message =>
+          message.thread_id === threadId
+            ? {
+                ...message,
+                is_pinned: is_pin,
+                pinned_details: details,
+              }
+            : message,
+        ),
+      };
+    }
+
     case ACTIONS.RESET_CHANNEL_THREAD_COUNT:
       return {
         ...state,
@@ -760,6 +822,24 @@ const reducers = (state: AppState, action: Action): AppState => {
             : message;
         }),
       };
+
+    case ACTIONS.UPDATE_REPLY_PIN: {
+      const { threadId, is_pin, details } = action.payload;
+
+      return {
+        ...state,
+        replyChat: state.replyChat.map((message: any) => {
+          const messageId = message?.id ?? message?.message_id;
+          return String(messageId) === String(threadId)
+            ? {
+                ...message,
+                is_pinned: is_pin,
+                pinned_details: details,
+              }
+            : message;
+        }),
+      };
+    }
 
     // --------------- AGENTS SECTION --------------------------
 

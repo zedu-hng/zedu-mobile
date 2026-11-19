@@ -14,15 +14,9 @@ import { normalize } from '../utils/normalize';
 import { useTheme } from '@/theme/ThemeProvider';
 import { createWelcomeScreenStyles } from '@/theme/createBuzzStyles';
 import { useNavigation } from '@react-navigation/native';
-import { OneSignal } from 'react-native-onesignal';
+import { requestAndroidNotificationPermission } from '@/services/android-fcm.service';
 import { requestAppPermissions } from '@/lib/permissions';
-import {
-  isFcmPlatform,
-  requestAndroidNotificationPermission,
-} from '@/services/push-notifications.service';
-import { CLIENT_URL } from '@env';
-
-const clientBaseUrl = (CLIENT_URL || 'https://zedu.chat').replace(/\/$/, '');
+import { CLIENT_BASE_URL } from '@/utils/client-url';
 
 /**
  * Welcome screen with sign-up and login entry points and the legal links.
@@ -45,12 +39,7 @@ const WelcomeScreen: React.FC = () => {
     try {
       // Request camera + audio permissions immediately on welcome screen
       const granted = await requestAppPermissions();
-      // Request notification permission
-      if (isFcmPlatform) {
-        await requestAndroidNotificationPermission();
-      } else {
-        await OneSignal.Notifications.requestPermission(true);
-      }
+      await requestAndroidNotificationPermission();
       if (granted) {
         setPermissionsGranted(true);
       } else {
@@ -110,7 +99,7 @@ const WelcomeScreen: React.FC = () => {
             <AppText
               size={13}
               style={styles.linkText}
-              onPress={() => openURL(`${clientBaseUrl}/policy`)}
+              onPress={() => openURL(`${CLIENT_BASE_URL}/policy`)}
             >
               Privacy Policy
             </AppText>{' '}
@@ -118,7 +107,7 @@ const WelcomeScreen: React.FC = () => {
             <AppText
               size={13}
               style={styles.linkText}
-              onPress={() => openURL(`${clientBaseUrl}/terms-of-service`)}
+              onPress={() => openURL(`${CLIENT_BASE_URL}/terms-of-service`)}
             >
               Terms of Service
             </AppText>

@@ -7,8 +7,10 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { AppText } from '@/components/ui/text';
-import { signOut } from '@/utils/sign-out';
+import { clearAllData } from '@/utils/helper';
+import { unregisterAndroidPushToken } from '@/services/android-fcm.service';
 import { useDataContext } from '@/store/useDataContext';
+import { ACTIONS } from '@/store/types';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '@/theme/ThemeProvider';
 import { createLogoutModalStyles } from '@/theme/createChatOverlayStyles';
@@ -28,7 +30,14 @@ const LogoutConfirmationModal = ({ visible, onClose }: LogoutModalProps) => {
   const logout = async () => {
     try {
       setLoading(true);
-      await signOut(dispatch);
+      await unregisterAndroidPushToken();
+      await clearAllData();
+
+      dispatch({ type: ACTIONS.TOKEN, payload: null });
+      dispatch({ type: ACTIONS.USER, payload: null });
+      dispatch({ type: ACTIONS.ORG_DATA, payload: null });
+      dispatch({ type: ACTIONS.DMS, payload: [] });
+      dispatch({ type: ACTIONS.DMS_CHAT, payload: { data: [], page: 1 } });
     } catch (e) {
       console.error('Logout error', e);
     } finally {

@@ -70,7 +70,7 @@ const ChangePasswordScreen = ({ navigation }: any) => {
   };
 
   return (
-    <Container>
+    <Container safeBottom>
       <View style={styles.stackHeaderCompact}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}

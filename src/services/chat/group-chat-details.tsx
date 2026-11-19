@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { ACTIONS } from '@/store/types';
 import { useDataContext } from '@/store/useDataContext';
 import { GetRequest } from '@/utils/requests';
@@ -13,32 +13,23 @@ const UseGroupChatDetails = ({ channel_id }: Props) => {
   const [page, setPage] = useState(1);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-
-  // Channel whose messages are currently loaded in the store by this hook.
-  const loadedChannelRef = useRef<string | null>(null);
+  const isFocusedRef = useRef(false);
+  // The conversation whose first page has loaded, so screens can tell when
+  // dmsChat belongs to this channel rather than the previous one.
+  const [loadedChannelId, setLoadedChannelId] = useState<string | null>(null);
 
   const fetchFirstPage = useCallback(async () => {
     const { data } = await GetRequest(
       `/group-dms/channels/${channel_id}/threads?page=1&limit=50`,
     );
     if (data) {
-      // Re-focusing the same chat (e.g. back navigation): refresh the newest
-      // page in place rather than resetting the list to page 1, which would
-      // drop older loaded pages and lose the scroll position.
-      const isRefresh = loadedChannelRef.current === channel_id;
-      loadedChannelRef.current = channel_id;
       dispatch({
         type: ACTIONS.DMS_CHAT,
         payload: {
           data: data.data,
           page: 1,
-          merge: isRefresh,
         },
       });
-
-      if (isRefresh) {
-        return;
-      }
 
       setPage(1);
       const paginationDetails = data.pagination?.[0];
@@ -48,13 +39,26 @@ const UseGroupChatDetails = ({ channel_id }: Props) => {
         setHasMore((data.data?.length || 0) >= 50);
       }
     }
+    setLoadedChannelId(channel_id);
   }, [channel_id, dispatch]);
 
   useFocusEffect(
     useCallback(() => {
+      isFocusedRef.current = true;
       fetchFirstPage();
+      return () => {
+        isFocusedRef.current = false;
+      };
     }, [fetchFirstPage, state?.callback]),
   );
+
+  useEffect(() => {
+    if (isFocusedRef.current) {
+      fetchFirstPage();
+    }
+    // Match DM chat-details: refetch when the conversation id changes while focused.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channel_id]);
 
   const loadMore = useCallback(async () => {
     if (isFetchingMore || !hasMore || state?.dmsChat?.length < 50) return;
@@ -94,7 +98,11 @@ const UseGroupChatDetails = ({ channel_id }: Props) => {
     }
   }, [channel_id, page, isFetchingMore, hasMore, dispatch, state?.dmsChat]);
 
-  return { loadMore, isFetchingMore };
+  return {
+    loadMore,
+    isFetchingMore,
+    isInitialLoading: loadedChannelId !== channel_id,
+  };
 };
 
 export default UseGroupChatDetails;

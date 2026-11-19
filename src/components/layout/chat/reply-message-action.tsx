@@ -9,7 +9,6 @@ import {
   InteractionManager,
 } from 'react-native';
 import EmojiPicker, { EmojiType } from 'rn-emoji-keyboard';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import { AppText } from '@/components/ui/text';
 import { useTheme } from '@/theme/ThemeProvider';
 import {
@@ -33,6 +32,8 @@ import {
 import { ThreadChatType, isOnReplyThreadScreen } from '@/utils/thread-message';
 import { ForwardMessageModal } from '@/components/layout/chat/forward-message-modal';
 import { buildForwardSourceContext } from '@/utils/forward-message';
+import { pinMessage, unpinMessage } from '@/utils/pin-message';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const DEFAULT_EMOJIS = ['👍', '😂', '🙏', '✅', '😭', '❤️', '👏'];
 
@@ -56,8 +57,9 @@ export const ReplyMessageAction = forwardRef<
     [colors],
   );
   const [isEmojiTrayOpen, setIsEmojiTrayOpen] = useState(false);
-  const [mode, setMode] = useState<'actions' | 'delete'>('actions');
+  const [mode, setMode] = useState<'actions' | 'delete' | 'unpin'>('actions');
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [pinLoading, setPinLoading] = useState(false);
   const [isForwardOpen, setIsForwardOpen] = useState(false);
   const [forwardItem, setForwardItem] = useState<any>(null);
   const navigation = useNavigation();
@@ -151,7 +153,7 @@ export const ReplyMessageAction = forwardRef<
   const ActionItem = ({
     label,
     icon,
-    iconName,
+    ionicon,
     isDestructive,
     handleClick,
     isLoading,
@@ -170,11 +172,11 @@ export const ReplyMessageAction = forwardRef<
       >
         {isLoading ? (
           <ActivityIndicator size="small" color={colors.error} />
-        ) : iconName ? (
-          <Ionicons
-            name={iconName}
-            size={20}
-            color={isDestructive ? colors.error : colors.textPrimary}
+        ) : ionicon ? (
+          <MaterialCommunityIcons
+            name={ionicon}
+            size={18}
+            color={isDestructive ? colors.error : colors.iconDefault}
           />
         ) : (
           <Image
@@ -197,6 +199,87 @@ export const ReplyMessageAction = forwardRef<
       ref.current?.close();
     }
     onClose();
+  };
+
+  const getChannelId = () =>
+    item?.channels_id ||
+    item?.channel_id ||
+    state?.channelDetails?.channels_id ||
+    state?.channelDetails?.channel_id;
+
+  const handlePin = async () => {
+    const channelId = getChannelId();
+    const threadId = item?.thread_id;
+    const messageId = item?.id ?? item?.message_id;
+    if (!channelId || !threadId || !messageId) {
+      ShowNotify('Error', 'Unable to pin this message');
+      return;
+    }
+
+    setPinLoading(true);
+    try {
+      const { error } = await pinMessage({
+        kind: 'message',
+        channelId,
+        threadId,
+        messageId: String(messageId),
+      });
+      if (error) {
+        ShowNotify('Error', error);
+        return;
+      }
+
+      dispatch({
+        type: ACTIONS.UPDATE_REPLY_PIN,
+        payload: {
+          threadId: String(messageId),
+          is_pin: true,
+          details: {
+            email: state?.user?.email,
+            username: state?.user?.username,
+          },
+        },
+      });
+      closeSheet();
+    } finally {
+      setPinLoading(false);
+    }
+  };
+
+  const handleUnpin = async () => {
+    const channelId = getChannelId();
+    const threadId = item?.thread_id;
+    const messageId = item?.id ?? item?.message_id;
+    if (!channelId || !messageId) {
+      ShowNotify('Error', 'Unable to unpin this message');
+      return;
+    }
+
+    setPinLoading(true);
+    try {
+      const { error } = await unpinMessage({
+        kind: 'message',
+        channelId,
+        threadId: threadId || '',
+        messageId: String(messageId),
+      });
+      if (error) {
+        ShowNotify('Error', error);
+        return;
+      }
+
+      dispatch({
+        type: ACTIONS.UPDATE_REPLY_PIN,
+        payload: {
+          threadId: String(messageId),
+          is_pin: false,
+          details: null,
+        },
+      });
+      closeSheet();
+    } finally {
+      setPinLoading(false);
+    }
   };
 
   const handleCopyMessage = async () => {
@@ -308,8 +391,7 @@ export const ReplyMessageAction = forwardRef<
 
       <AppBottomSheet
         ref={ref}
-        index={itemKey ? 0 : -1}
-        snapPoints={mode === 'delete' ? ['40%'] : ['65%']}
+        snapPoints={mode === 'actions' ? ['65%'] : ['40%']}
         paddingBottom={normalize(110)}
         onClose={() => {
           setMode('actions');
@@ -377,7 +459,7 @@ export const ReplyMessageAction = forwardRef<
               {item?.user_id === state?.user?.user_id && (
                 <ActionItem
                   label="Edit Message"
-                  iconName="create-outline"
+                  icon={require('@/assets/icons/edit-message.png')}
                   handleClick={handleEdit}
                 />
               )}
@@ -392,6 +474,20 @@ export const ReplyMessageAction = forwardRef<
                 icon={require('@/assets/icons/link.png')}
                 handleClick={handleCopyMessageLink}
               />
+              {item?.is_pinned ? (
+                <ActionItem
+                  label="Un-pin from channel"
+                  ionicon="pin"
+                  handleClick={() => setMode('unpin')}
+                />
+              ) : (
+                <ActionItem
+                  label="Pin to channel"
+                  ionicon="pin-outline"
+                  handleClick={handlePin}
+                  isLoading={pinLoading}
+                />
+              )}
               {item?.user_id === state?.user?.user_id && (
                 <ActionItem
                   label="Delete"
@@ -402,6 +498,26 @@ export const ReplyMessageAction = forwardRef<
               )}
             </ScrollView>
           </>
+        ) : mode === 'unpin' ? (
+          <View style={styles.deleteConfirmContainer}>
+            <AppText variant="medium" size={16} style={styles.deleteTitle}>
+              Remove pinned item?
+            </AppText>
+            <View style={{ marginTop: 15 }}>
+              <ActionItem
+                label="Remove pinned item"
+                ionicon="pin"
+                isDestructive
+                handleClick={handleUnpin}
+                isLoading={pinLoading}
+              />
+              <ActionItem
+                label="Cancel"
+                icon={require('@/assets/icons/emoji.png')}
+                handleClick={() => setMode('actions')}
+              />
+            </View>
+          </View>
         ) : (
           <View style={styles.deleteConfirmContainer}>
             <AppText variant="medium" size={16} style={styles.deleteTitle}>
@@ -417,7 +533,7 @@ export const ReplyMessageAction = forwardRef<
               />
               <ActionItem
                 label="Cancel"
-                icon={require('@/assets/icons/close.png')}
+                icon={require('@/assets/icons/emoji.png')}
                 handleClick={() => setMode('actions')}
               />
             </View>

@@ -50,8 +50,6 @@ import { retrieveMultipleData } from '@/utils/helper';
 import { useDataContext } from '@/store/useDataContext';
 import { ACTIONS } from '@/store/types';
 import { Platform, AppState, AppStateStatus } from 'react-native';
-import { OneSignal } from 'react-native-onesignal';
-import { ONESIGNAL_APP_ID } from '@env';
 import { ShowNotify } from '@/components/ui/toast';
 import { BuzzStack, BuzzStackParamList } from './stacks/buzz';
 import { MentionStack, MentionStackParamList } from './stacks/mentions';
@@ -92,16 +90,15 @@ import {
   handleMessageNotificationClick,
 } from '@/services/notification-navigation.service';
 import {
+  registerAndroidPushToken,
+  subscribeAndroidPush,
+} from '@/services/android-fcm.service';
+import {
   extractDirectCallCancelDetails,
   extractDirectCallAnsweredElsewhereDetails,
   handleIncomingDirectCallCancelled,
   handleIncomingDirectCallAnsweredElsewhere,
 } from '@/services/incoming-direct-call-cancel.service';
-import {
-  isFcmPlatform,
-  requestAndroidNotificationPermission,
-  subscribeToAndroidPush,
-} from '@/services/push-notifications.service';
 import { getActiveRouteName, navigate } from './root-navigation';
 import { MinimizedCallWidget } from '@/components/buzz/MinimizedCallWidget';
 import { VoiceNotePlaybackHost } from '@/components/layout/chat/voice-note-playback-host';
@@ -221,10 +218,16 @@ export const AppNavigator = ({ currentRoute }: AppNavigatorProps) => {
     isInitializedRef.current && hasTokenRef.current;
 
   useEffect(() => {
-    if (!isFcmPlatform) {
-      OneSignal.initialize(ONESIGNAL_APP_ID);
+    if (!state?.token) {
+      return;
     }
 
+    registerAndroidPushToken().catch(error => {
+      console.log('[FCM] failed to register device token', error);
+    });
+  }, [state?.token]);
+
+  useEffect(() => {
     const isDirectCallNotification = (notification: any) => {
       const payload =
         notification?.additionalData ||
@@ -513,7 +516,7 @@ export const AppNavigator = ({ currentRoute }: AppNavigatorProps) => {
         event.preventDefault();
         if (Platform.OS === 'ios') {
           console.warn(
-            '[OneSignal] direct call notification received on iOS — check VoIP Push logs separately',
+            '[Firebase] direct call notification received on iOS — VoIP push handles the ring',
           );
         } else {
           await processIncomingCallInvite(event?.notification);
@@ -535,57 +538,18 @@ export const AppNavigator = ({ currentRoute }: AppNavigatorProps) => {
       event.getNotification().display();
     };
 
-    const isAnsweredElsewhereNotification = (notification: any) =>
-      Boolean(
-        extractDirectCallAnsweredElsewhereDetails(
-          notification?.additionalData || {},
-          userRef.current?.user_id || userRef.current?.id,
-        ),
-      );
-
-    // FCM does not display notifications while the app is in the foreground, so chat
-    // messages surface as an in-app toast instead.
-    const onFcmForegroundMessage = async (notification: any) => {
-      // ZeduFirebaseMessagingService already dismissed the call and emitted the cancel event.
-      if (isDirectCallCancelledNotification(notification)) {
-        return;
-      }
-
-      if (isAnsweredElsewhereNotification(notification)) {
-        await processIncomingCallAnsweredElsewhere(notification);
-        return;
-      }
-
-      if (isDirectCallNotification(notification)) {
-        await processIncomingCallInvite(notification);
-        return;
-      }
-
-      const body = notification?.body;
-      ShowNotify(
-        notification?.title as string,
-        typeof body === 'string' ? body.replace(/<[^>]*>?/gm, '') : '',
-      );
-    };
-
-    let unsubscribePush: () => void = () => {};
-
-    if (isFcmPlatform) {
-      unsubscribePush = subscribeToAndroidPush({
-        onForeground: notification => {
-          onFcmForegroundMessage(notification).catch(() => {});
-        },
-        onOpened: notification => {
-          onClickListener({ notification }).catch(() => {});
-        },
-      });
-    } else {
-      OneSignal.Notifications.addEventListener('click', onClickListener);
-      OneSignal.Notifications.addEventListener(
-        'foregroundWillDisplay',
-        onForegroundDisplayListener,
-      );
-    }
+    const unsubscribePush = subscribeAndroidPush({
+      onOpened: notification => {
+        onClickListener({ notification }).catch(() => {});
+      },
+      onForeground: notification => {
+        onForegroundDisplayListener({
+          notification,
+          preventDefault: () => {},
+          getNotification: () => ({ display: () => {} }),
+        }).catch(() => {});
+      },
+    });
 
     let unsubscribeNativeIncomingCall: () => void = () => {};
     let unsubscribeNativeIncomingCallCancelled: () => void = () => {};
@@ -619,15 +583,7 @@ export const AppNavigator = ({ currentRoute }: AppNavigatorProps) => {
     }
 
     return () => {
-      if (isFcmPlatform) {
-        unsubscribePush();
-      } else {
-        OneSignal.Notifications.removeEventListener('click', onClickListener);
-        OneSignal.Notifications.removeEventListener(
-          'foregroundWillDisplay',
-          onForegroundDisplayListener,
-        );
-      }
+      unsubscribePush();
       unsubscribeNativeIncomingCall();
       unsubscribeNativeIncomingCallCancelled();
     };
@@ -645,15 +601,6 @@ export const AppNavigator = ({ currentRoute }: AppNavigatorProps) => {
           dispatch({ type: ACTIONS.ORG_ID, payload: current_org });
           dispatch({ type: ACTIONS.ORG_DATA, payload: organisation });
           dispatch({ type: ACTIONS.USER, payload: user });
-          // Signed-in launch skips the welcome screen, so ask here. On a signed-out launch the welcome
-          // screen asks after camera/audio, so two permission dialogs never open at the same time.
-          if (isFcmPlatform) {
-            requestAndroidNotificationPermission().catch(() => undefined);
-          } else {
-            OneSignal.Notifications.requestPermission(true).catch(
-              () => undefined,
-            );
-          }
         }
       } finally {
         setInitializing(false);

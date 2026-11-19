@@ -11,17 +11,14 @@ import { AppText } from '@/components/ui/text';
 import { AppInput } from '@/components/ui/input';
 import { AppButton } from '@/components/ui/button';
 import { useNavigation } from '@react-navigation/native';
-import {
-  configureGoogleSignIn,
-  isGoogleSignInAvailable,
-  signInWithGoogle,
-} from '@/lib/google-auth';
+import { configureGoogleSignIn, signInWithGoogle } from '@/lib/google-auth';
 import { signInWithApple } from '@/lib/apple-auth';
 import { PostRequest } from '@/utils/requests';
 import { useDataContext } from '@/store/useDataContext';
 import { ACTIONS } from '@/store/types';
 import Container from '@/components/layout/container';
 import { storeMultipleData } from '@/utils/helper';
+import { normalizeEmail } from '@/utils/normalize-email';
 import { useTheme } from '@/theme/ThemeProvider';
 import { createAuthStyles } from '@/theme/createScreenStyles';
 
@@ -116,7 +113,7 @@ const SigninScreen: React.FC = () => {
     setButtonLoading(true);
 
     const payload = {
-      email,
+      email: normalizeEmail(email),
       password,
     };
 
@@ -164,23 +161,21 @@ const SigninScreen: React.FC = () => {
           Login to Zedu
         </AppText>
 
-        {isGoogleSignInAvailable && (
-          <TouchableOpacity
-            style={styles.socialBtn}
-            activeOpacity={0.8}
-            onPress={handleGoogleLogin}
-            disabled={googleLoading}
-          >
-            <Image
-              source={require('@/assets/google-icon.png')}
-              style={styles.socialIcon}
-            />
-            <AppText variant="medium" size={16}>
-              Sign in with Google
-            </AppText>
-            {googleLoading && <ActivityIndicator />}
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          style={styles.socialBtn}
+          activeOpacity={0.8}
+          onPress={handleGoogleLogin}
+          disabled={googleLoading}
+        >
+          <Image
+            source={require('@/assets/google-icon.png')}
+            style={styles.socialIcon}
+          />
+          <AppText variant="medium" size={16}>
+            Sign in with Google
+          </AppText>
+          {googleLoading && <ActivityIndicator />}
+        </TouchableOpacity>
         {Platform.OS === 'ios' && (
           <TouchableOpacity
             style={styles.socialBtn}
@@ -199,15 +194,13 @@ const SigninScreen: React.FC = () => {
           </TouchableOpacity>
         )}
 
-        {(isGoogleSignInAvailable || Platform.OS === 'ios') && (
-          <View style={styles.dividerContainer}>
-            <View style={styles.line} />
-            <AppText size={14} style={styles.orText}>
-              OR
-            </AppText>
-            <View style={styles.line} />
-          </View>
-        )}
+        <View style={styles.dividerContainer}>
+          <View style={styles.line} />
+          <AppText size={14} style={styles.orText}>
+            OR
+          </AppText>
+          <View style={styles.line} />
+        </View>
 
         <AppInput
           label="Email Address"
@@ -215,6 +208,8 @@ const SigninScreen: React.FC = () => {
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
           returnKeyType="done"
         />
 
