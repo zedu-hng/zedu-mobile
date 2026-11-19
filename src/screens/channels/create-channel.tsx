@@ -14,12 +14,6 @@ import Container from '@/components/layout/container';
 import { useDataContext } from '@/store/useDataContext';
 import { PostRequest } from '@/utils/requests';
 import { ACTIONS } from '@/store/types';
-import {
-  MAX_CHANNEL_NAME_LENGTH,
-  finalizeChannelName,
-  formatChannelName,
-  getChannelNameRemaining,
-} from '@/utils/channel-name';
 
 const CreateChannelScreen = ({ navigation }: any) => {
   const { colors } = useTheme();
@@ -39,15 +33,10 @@ const CreateChannelScreen = ({ navigation }: any) => {
   const { orgId, user } = state;
 
   const createChannel = async () => {
-    const name = finalizeChannelName(channelName);
-    if (!name) {
-      return;
-    }
-
     setButtonLoading(true);
 
     const payload = {
-      name,
+      name: channelName,
       description: description.trim(),
       organisation_id: orgId,
       is_private: channelType === 'Private' ? true : false,
@@ -99,7 +88,7 @@ const CreateChannelScreen = ({ navigation }: any) => {
             /* Handle Next */
           }}
           style={styles.headerBtn}
-          disabled={!finalizeChannelName(channelName)}
+          disabled={!channelName.trim()}
         />
       </View>
 
@@ -121,35 +110,23 @@ const CreateChannelScreen = ({ navigation }: any) => {
                 </AppText>
               </View>
             </TouchableOpacity>
-            <View
-              style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
-            >
+            <View style={{ flex: 1 }}>
               <TextInput
                 placeholder="Channel Name"
                 placeholderTextColor={colors.iconMuted}
                 value={channelName}
-                maxLength={MAX_CHANNEL_NAME_LENGTH}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
                 onChangeText={text => {
-                  setChannelName(formatChannelName(text));
+                  const formatted = text.replace(/\s/g, '-').toLowerCase();
+                  setChannelName(formatted);
                 }}
                 style={{
-                  flex: 1,
                   fontSize: 16,
                   paddingVertical: 20,
                   color: colors.textPrimary,
                 }}
               />
-              <AppText
-                size={13}
-                accessibilityLabel={`${getChannelNameRemaining(
-                  channelName,
-                )} characters left`}
-                style={{ color: colors.iconMuted }}
-              >
-                {getChannelNameRemaining(channelName)}
-              </AppText>
             </View>
           </View>
 
