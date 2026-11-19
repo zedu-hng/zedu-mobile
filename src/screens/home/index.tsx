@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Image,
@@ -26,12 +26,12 @@ import { Chat } from '@/types/chats';
 import { ACTIONS } from '@/store/types';
 import UseGetOrg from '@/services/org/get-org';
 import GeneralNotificationConnection from '@/centrifugoo/general-notification-connection';
-import { OneSignal } from 'react-native-onesignal';
-import { ONESIGNAL_APP_ID } from '@env';
-import { PostRequest, PutRequest } from '@/utils/requests';
+import { PostRequest } from '@/utils/requests';
 import { RootStackParamList } from '@/navigation/navigator';
 import { UserAvatarWithStatus } from '@/components/ui/user-avatar-with-status';
-import { formatPreviewMessage } from '@/utils/message-text';
+import useShareZeduPrompt from '@/hooks/useShareZeduPrompt';
+import { getChatListPreview } from '@/utils/message-text';
+import { UserAvatar } from '@/screens/channels/user-avatar';
 
 const HomeScreen = () => {
   const navigation = useNavigation<DrawerNavigationProp<RootStackParamList>>();
@@ -39,6 +39,7 @@ const HomeScreen = () => {
   const styles = useMemo(() => createChatListStyles(colors), [colors]);
   const { state, dispatch } = useDataContext();
   const { user, orgData, orgId, dms } = state;
+  useShareZeduPrompt(user?.user_id || user?.id);
   const [activeCategory, setActiveCategory] = useState('All');
   const [search, setSearch] = useState('');
   const [_chatLoading, setChatLoading] = useState(false);
@@ -55,17 +56,6 @@ const HomeScreen = () => {
     { id: 'Groups', label: `Groups  ${groupCount}` },
     { id: 'Favorites', label: 'Favorites' },
   ];
-
-  useEffect(() => {
-    const getData = async () => {
-      OneSignal.initialize(ONESIGNAL_APP_ID);
-      const deviceToken = await OneSignal.User.pushSubscription.getIdAsync();
-      const payload = { subscription_id: deviceToken };
-
-      await PutRequest('/users/onesignal-subscription-id', payload);
-    };
-    getData();
-  }, []);
 
   const filteredDms = useMemo(() => {
     if (!dms) return [];
@@ -94,6 +84,8 @@ const HomeScreen = () => {
         params: {
           participant_id: props?.participant_id,
           channel_id: props?.channel_id,
+          // Captured before the count is reset so the chat can mark new messages.
+          unread_count: props?.thread_count || 0,
         },
       });
     } else {
@@ -107,6 +99,8 @@ const HomeScreen = () => {
         screen: 'GroupChatDetails',
         params: {
           channel_id: props?.channel_id,
+          // Captured before the count is reset so the chat can mark new messages.
+          unread_count: props?.thread_count || 0,
         },
       });
     }
@@ -176,7 +170,7 @@ const HomeScreen = () => {
             </AppText>
           </TouchableOpacity>
 
-          <UserAvatarWithStatus user={user} />
+          <UserAvatarWithStatus user={user} badgeRingColor={colors.secondary} />
         </View>
 
         <View style={styles.searchBar}>
@@ -281,6 +275,10 @@ const HomeScreen = () => {
               renderItem={({ item }) => {
                 const isDM = item.channel_type === 'dm';
                 const participant = isDM ? item.participants?.[0] : null;
+                const otherUser =
+                  item.participants?.find(p => p.user_id !== user?.user_id) ??
+                  participant;
+                const isOtherUserOnline = Boolean(otherUser?.online);
 
                 const handleAvatarPress = () => {
                   if (!isDM || !participant) return;
@@ -308,15 +306,26 @@ const HomeScreen = () => {
                         style={styles.avatarWrapper}
                         onPress={handleAvatarPress}
                         activeOpacity={0.7}
-                        accessibilityLabel={`View ${participant.username}'s profile`}
+                        accessibilityLabel={`View ${
+                          participant.username
+                        }'s profile, ${
+                          isOtherUserOnline ? 'online' : 'offline'
+                        }`}
                         accessibilityRole="button"
                         accessibilityHint="Opens user profile"
                       >
-                        <Image
-                          source={{
-                            uri: item.avatar_url || item.default_avatar_url,
+                        <UserAvatar
+                          user={{
+                            avatar_url: item.avatar_url,
+                            default_avatar_url: item.default_avatar_url,
+                            online: isOtherUserOnline,
                           }}
-                          style={styles.chatAvatar}
+                          size={45}
+                          badgeSize={12}
+                          badgeRingColor={colors.background}
+                          borderColor={colors.border}
+                          fallbackName={item.username}
+                          disabled
                         />
                       </TouchableOpacity>
                     ) : (
@@ -391,9 +400,7 @@ const HomeScreen = () => {
                           numberOfLines={1}
                           style={styles.chatMsg}
                         >
-                          {formatPreviewMessage(
-                            item.preview_message || 'Chat with user',
-                          )}
+                          {getChatListPreview(item) || 'Chat with user'}
                         </AppText>
                         {!!item.thread_count && item.thread_count > 0 && (
                           <View style={styles.countBadge}>

@@ -17,6 +17,7 @@ import { isVideoFile } from '@/utils/file-helpers';
 import { isVoiceMessageMedia } from '@/utils/voice-message';
 import { AudioMessagePlayer } from '../chat/audio-message-player';
 import ReactionDetailsSheet from '../chat/reaction-details';
+import { PinnedMessageBanner } from '../chat/pinned-message-banner';
 
 const ThreadMessageItem = ({
   item,
@@ -24,6 +25,7 @@ const ThreadMessageItem = ({
   messages,
   onLongPress,
   onMentionUser,
+  onMentionChannel,
   isGroup,
   inverted = false,
 }: any) => {
@@ -182,7 +184,12 @@ const ThreadMessageItem = ({
         </View>
       )}
 
-      <View style={[styles.rowContainer]}>
+      <View
+        style={[
+          styles.rowContainer,
+          item.is_pinned ? { backgroundColor: colors.lightYellow } : undefined,
+        ]}
+      >
         <UserStatusIcon user={item} style={styles.threadStatusIcon} />
         <TouchableOpacity
           style={styles.groupAvatarContainer}
@@ -195,6 +202,7 @@ const ThreadMessageItem = ({
         </TouchableOpacity>
 
         <View style={styles.messageColumn}>
+          <PinnedMessageBanner item={item} />
           <TouchableOpacity
             activeOpacity={0.8}
             onLongPress={() => handlePress(item)}
@@ -235,6 +243,7 @@ const ThreadMessageItem = ({
                     html={item.message || item.text}
                     media={item.media}
                     onMentionUser={onMentionUser}
+                    onMentionChannel={onMentionChannel}
                   />
                 </View>
               )}

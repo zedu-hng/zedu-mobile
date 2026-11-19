@@ -16,7 +16,26 @@ export function createSettingsStyles(colors: ThemeColors) {
     header: {
       backgroundColor: colors.secondary,
       paddingHorizontal: 10,
-      paddingVertical: Platform.OS === 'ios' ? 30 : 20,
+      paddingTop: Platform.OS === 'ios' ? 12 : 8,
+      paddingBottom: Platform.OS === 'ios' ? 20 : 16,
+    },
+    headerNav: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      minHeight: 44,
+      marginBottom: 12,
+      paddingHorizontal: 2,
+    },
+    backBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingVertical: 6,
+      paddingRight: 12,
+    },
+    headerTitle: {
+      color: colors.white,
+      fontSize: 18,
     },
     profileCard: {
       flexDirection: 'row',
@@ -70,7 +89,7 @@ export function createSettingsStyles(colors: ThemeColors) {
     itemRow: { flexDirection: 'row', alignItems: 'center', padding: 14 },
     iconContainer: iconTile,
     textContainer: { flex: 1, marginLeft: 12 },
-    itemTitle: { fontSize: 16, color: colors.textPrimary },
+    itemTitle: { fontSize: 15, color: colors.textPrimary },
     itemSubtitle: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
     divider: {
       height: StyleSheet.hairlineWidth,
@@ -248,6 +267,9 @@ export function createChatDetailStyles(colors: ThemeColors) {
     moreBtn: { padding: 5 },
     headerAvatarContainer: { marginLeft: 5 },
     headerAvatar: { width: 36, height: 36, borderRadius: 18 },
+    headerPresenceText: { marginTop: 2 },
+    headerPresenceOnline: { color: colors.presenceOnlineText },
+    headerPresenceOffline: { color: colors.textSecondary },
     headerIconMore: {
       height: 20,
       objectFit: 'contain',

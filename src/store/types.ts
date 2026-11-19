@@ -47,6 +47,7 @@ export enum ACTIONS {
   UPDATE_DM_AND_MOVE_TO_TOP = 'UPDATE_DM_AND_MOVE_TO_TOP',
   UPDATE_MESSAGE_THREAD = 'UPDATE_MESSAGE_THREAD',
   RESET_DM_THREAD_COUNT = 'RESET_DM_THREAD_COUNT',
+  UPDATE_USER_PRESENCE = 'UPDATE_USER_PRESENCE',
   DELETE_DM_MESSAGE = 'DELETE_DM_MESSAGE',
   MEDIA = 'MEDIA',
   GROUP_DETAILS = 'GROUP_DETAILS',
@@ -65,6 +66,9 @@ export enum ACTIONS {
   UPDATE_CHANNEL_COUNT = 'UPDATE_CHANNEL_COUNT',
   UPDATE_CHANNEL_MESSAGE_THREAD = 'UPDATE_CHANNEL_MESSAGE_THREAD',
   UPDATE_CHANNEL_REACTIONS = 'UPDATE_CHANNEL_REACTIONS',
+  UPDATE_CHANNEL_PIN = 'UPDATE_CHANNEL_PIN',
+  UPDATE_DM_PIN = 'UPDATE_DM_PIN',
+  UPDATE_REPLY_PIN = 'UPDATE_REPLY_PIN',
   RESET_CHANNEL_THREAD_COUNT = 'RESET_CHANNEL_THREAD_COUNT',
   DELETE_CHANNEL_MESSAGE = 'DELETE_CHANNEL_MESSAGE',
   CHANNEL_CALLBACK = 'CHANNEL_CALLBACK',
@@ -285,6 +289,14 @@ interface ResetDmCountAction {
   payload: string;
 }
 
+interface UpdateUserPresenceAction {
+  type: ACTIONS.UPDATE_USER_PRESENCE;
+  payload: {
+    user_id: string;
+    online: boolean;
+  };
+}
+
 interface DeleteDmMessageAction {
   type: ACTIONS.DELETE_DM_MESSAGE;
   payload: {
@@ -356,6 +368,33 @@ interface UpdateChannelReactionsAction {
   payload: {
     threadId: string;
     reactions: any[];
+  };
+}
+
+interface UpdateChannelPinAction {
+  type: ACTIONS.UPDATE_CHANNEL_PIN;
+  payload: {
+    threadId: string;
+    is_pin: boolean;
+    details?: any;
+  };
+}
+
+interface UpdateDmPinAction {
+  type: ACTIONS.UPDATE_DM_PIN;
+  payload: {
+    threadId: string;
+    is_pin: boolean;
+    details?: any;
+  };
+}
+
+interface UpdateReplyPinAction {
+  type: ACTIONS.UPDATE_REPLY_PIN;
+  payload: {
+    threadId: string;
+    is_pin: boolean;
+    details?: any;
   };
 }
 
@@ -580,6 +619,7 @@ export type Action =
   | UpdateDmAndMoveToTopAction
   | UpdateMessageThreadAction
   | ResetDmCountAction
+  | UpdateUserPresenceAction
   | DeleteDmMessageAction
   | GroupDetailsAction
   | GroupCallbackAction
@@ -597,6 +637,8 @@ export type Action =
   | UpdateUserChannelCountAction
   | UpdateChannelMessageThreadAction
   | UpdateChannelReactionsAction
+  | UpdateChannelPinAction
+  | UpdateDmPinAction
   | ResetChannelCountAction
   | DeleteChannelMessageAction
   | ChannelCallbackAction
@@ -606,6 +648,7 @@ export type Action =
   | ReplyChatAction
   | ReplyCallbackAction
   | UpdateReplyReactionsAction
+  | UpdateReplyPinAction
 
   // Agents
   | AgentsAction

@@ -80,8 +80,8 @@ android {
         applicationId "net.emerj.zedu"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 20
-        versionName "1.0.5"
+        versionCode 24
+        versionName "1.0.11"
     }
     packaging {
         jniLibs {
@@ -110,8 +110,7 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
-            // zedu.keystore is gitignored; fork/PR CI builds fall back to debug signing (review-only, not store-uploadable).
-            signingConfig file('zedu.keystore').exists() ? signingConfigs.release : signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
@@ -123,6 +122,8 @@ dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
     implementation("androidx.lifecycle:lifecycle-process:2.8.7")
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+    implementation("com.google.firebase:firebase-messaging")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
