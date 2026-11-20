@@ -315,11 +315,11 @@ interface EditDmMessageAction {
 // -------------------- Channels ----------------------------
 interface UserChannelsAction {
   type: ACTIONS.USER_CHANNELS;
-  payload: [];
+  payload: Channel[];
 }
 interface AllChannelsAction {
   type: ACTIONS.ALL_CHANNELS;
-  payload: [];
+  payload: Channel[];
 }
 interface ChannelLoadingAction {
   type: ACTIONS.CHANNEL_LOADING;
