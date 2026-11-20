@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   View,
   Image,
@@ -34,6 +34,11 @@ import uuid from 'react-native-uuid';
 import ChatBackground from '@/components/layout/chat/chat-background';
 import { MentionSheet } from '@/components/layout/chat/mention-sheet';
 import { buildMentionHtmlTag } from '@/utils/message-text';
+import {
+  createScrollToIndexFailedHandler,
+  recordChatItemHeight,
+  scrollChatToIndex,
+} from '@/utils/scroll-to-pinned-message';
 
 const MentionThreadScreen = ({ navigation, route }: any) => {
   const { colors } = useTheme();
@@ -46,6 +51,8 @@ const MentionThreadScreen = ({ navigation, route }: any) => {
   } | null>(null);
   const [mentionsMetadata, setMentionsMetadata] = useState<any[]>([]);
   const flatListRef = useRef<FlatList>(null);
+  const hasScrolledToHighlight = useRef(false);
+  const [highlightMsgId, setHighlightMsgId] = useState<string | null>(null);
   const actionSheetRef = useRef<any>(null);
   const pickerSheetRef = useRef<any>(null);
   const [selectedMsg, setSelectedMsg] = useState<Channel | null>(null);
@@ -64,7 +71,7 @@ const MentionThreadScreen = ({ navigation, route }: any) => {
     channelDetails,
     participant,
   } = state;
-  const { thread_id, channel_id, mention } = route.params;
+  const { thread_id, channel_id, mention, highlight_message_id } = route.params;
 
   const isChannelThread =
     mention?.channel_type !== 'DM' && mention?.channel_type !== 'GroupDm';
@@ -134,6 +141,35 @@ const MentionThreadScreen = ({ navigation, route }: any) => {
   const [isVoiceUploading, setIsVoiceUploading] = useState(false);
 
   // Called immediately when the user stops recording — uploads in background
+  const handleScrollToIndexFailed = useMemo(
+    () => createScrollToIndexFailedHandler(flatListRef),
+    [],
+  );
+
+  // Opening a reply from search, a mention or a notification passes the reply
+  // id: scroll to it and highlight it, the same way the channel thread does.
+  useEffect(() => {
+    if (
+      !highlight_message_id ||
+      hasScrolledToHighlight.current ||
+      !replyChat?.length
+    ) {
+      return;
+    }
+
+    const index = replyChat.findIndex(
+      (msg: any) =>
+        String(msg.id ?? msg.message_id) === String(highlight_message_id),
+    );
+    if (index < 0) return;
+
+    hasScrolledToHighlight.current = true;
+    setHighlightMsgId(String(highlight_message_id));
+    scrollChatToIndex(flatListRef, index, replyChat);
+    const timer = setTimeout(() => setHighlightMsgId(null), 2500);
+    return () => clearTimeout(timer);
+  }, [highlight_message_id, replyChat]);
+
   const handleVoiceRecorded = async (uri: string) => {
     setIsVoiceUploading(true);
     const tempId = uuid.v4() as string;
@@ -178,10 +214,11 @@ const MentionThreadScreen = ({ navigation, route }: any) => {
       formattedContent = formattedContent.replace(`@${m.label}`, mentionTag);
     });
     const finalHtml = `<p>${formattedContent}</p>`;
+    const tempId = uuid.v4() as string;
 
     const optimisticMessage = {
       channels_id: channel_id,
-      id: channel_id,
+      id: tempId,
       thread_id: thread_id,
       username: state.user?.username || 'You',
       avatar_url: state.user?.avatar_url,
@@ -189,7 +226,7 @@ const MentionThreadScreen = ({ navigation, route }: any) => {
       created_at: new Date().toISOString(),
       status: 'pending',
       type: 'message',
-      media: media,
+      media: medias,
       user_id: state.user?.user_id,
       reactions: null,
       isOptimistic: true,
@@ -236,6 +273,15 @@ const MentionThreadScreen = ({ navigation, route }: any) => {
       type: ACTIONS.CHANNEL_CALLBACK,
       payload: !state.channelCallback,
     });
+
+    if (error) {
+      dispatch({
+        type: ACTIONS.REPLY_CHAT,
+        payload: { removedMessageId: tempId },
+      });
+    }
+
+    dispatch({ type: ACTIONS.MEDIA, payload: [] });
     clearUploads();
   };
 
@@ -308,20 +354,37 @@ const MentionThreadScreen = ({ navigation, route }: any) => {
         data={replyChat}
         inverted
         keyExtractor={item => String(item.id ?? item.message_id)}
-        extraData={replyChat}
+        extraData={[replyChat, highlightMsgId]}
+        onScrollToIndexFailed={handleScrollToIndexFailed}
         renderItem={({ item, index }) => (
-          <ThreadMessageItem
-            item={{
-              ...item,
-              id: item.id ?? item.message_id,
-              text: item.message || '',
-              message: item.message || '',
+          <View
+            onLayout={e =>
+              recordChatItemHeight(
+                item.id ?? item.message_id,
+                e.nativeEvent.layout.height,
+              )
+            }
+            style={{
+              backgroundColor:
+                highlightMsgId &&
+                String(item.id ?? item.message_id) === String(highlightMsgId)
+                  ? colors.chatHighlight
+                  : 'transparent',
             }}
-            index={index}
-            messages={replyChat}
-            inverted={true}
-            onLongPress={() => handleLongPress(item)}
-          />
+          >
+            <ThreadMessageItem
+              item={{
+                ...item,
+                id: item.id ?? item.message_id,
+                text: item.message || '',
+                message: item.message || '',
+              }}
+              index={index}
+              messages={replyChat}
+              inverted={true}
+              onLongPress={() => handleLongPress(item)}
+            />
+          </View>
         )}
         ListFooterComponent={<ThreadItem item={selectedMessage} />}
         contentContainerStyle={styles.listContent}
@@ -379,7 +442,7 @@ const MentionThreadScreen = ({ navigation, route }: any) => {
           message={message}
           setMessage={setMessage}
           onTypingChange={handleTyping}
-          onSend={(content: any) => handleSendMessage(content)}
+          onSend={(content: any) => handleSendMessage(content, media)}
           onVoiceRecorded={handleVoiceRecorded}
           onVoiceSendReady={handleVoiceSendReady}
           onVoiceCancel={handleVoiceCancel}

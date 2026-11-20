@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { ACTIONS } from '@/store/types';
 import { useDataContext } from '@/store/useDataContext';
 import { GetRequest } from '@/utils/requests';
+import { getThreadRepliesUrl } from '@/utils/thread-message';
 
 interface Props {
   channel_id: string;
@@ -18,7 +19,7 @@ const UseReplyChat = ({ channel_id, thread_id }: Props) => {
 
   const getChat = useCallback(async () => {
     const { data, error } = await GetRequest(
-      `/threads/${thread_id}/channels/${channel_id}?page=1&limit=50`,
+      getThreadRepliesUrl('channel', channel_id, thread_id, 1),
     );
 
     if (!error) {
@@ -57,7 +58,7 @@ const UseReplyChat = ({ channel_id, thread_id }: Props) => {
 
     try {
       const { data, error } = await GetRequest(
-        `/threads/channels/${channel_id}?page=${nextPage}&limit=50`,
+        getThreadRepliesUrl('channel', channel_id, thread_id, nextPage),
       );
 
       if (!error && data?.data && data.data.length > 0) {
