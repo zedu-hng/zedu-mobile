@@ -3,6 +3,10 @@ import { ACTIONS } from '@/store/types';
 import { useDataContext } from '@/store/useDataContext';
 import { GetRequest } from '@/utils/requests';
 import { useFocusEffect } from '@react-navigation/native';
+import {
+  readCachedMessages,
+  writeCachedMessages,
+} from '@/services/messages/message-cache';
 
 interface Props {
   channel_id: string;
@@ -19,6 +23,18 @@ const UseGroupChatDetails = ({ channel_id }: Props) => {
   const [loadedChannelId, setLoadedChannelId] = useState<string | null>(null);
 
   const fetchFirstPage = useCallback(async () => {
+    const cacheKey = `group-dm:${channel_id}`;
+
+    // Paint the cached page first, so reopening a conversation is instant.
+    const cached = await readCachedMessages(cacheKey);
+    if (cached.length) {
+      dispatch({
+        type: ACTIONS.DMS_CHAT,
+        payload: { data: cached, page: 1 },
+      });
+      setLoadedChannelId(channel_id);
+    }
+
     const { data } = await GetRequest(
       `/group-dms/channels/${channel_id}/threads?page=1&limit=50`,
     );
@@ -31,6 +47,7 @@ const UseGroupChatDetails = ({ channel_id }: Props) => {
         },
       });
 
+      writeCachedMessages(cacheKey, data.data || []);
       setPage(1);
       const paginationDetails = data.pagination?.[0];
       if (paginationDetails?.total_pages_count) {
