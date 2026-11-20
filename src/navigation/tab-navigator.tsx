@@ -23,7 +23,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { ACTIONS } from '@/store/types';
 import { BuzzTabStack } from '@/navigation/stacks/buzz/buzz-tab-stack';
 import MentionsScreen from '@/screens/mentions';
-import { signOut } from '@/utils/sign-out';
+import { shouldSignOut, signOut } from '@/utils/sign-out';
 import { parseOrganisationThreadsResponse } from '@/services/mentions/parse-organisation-threads';
 import { syncRolesAndPermissionsFromApi } from '@/lib/role-permissions';
 import { AppText } from '@/components/ui/text';
@@ -281,13 +281,15 @@ const TabNavigator = ({
   useFocusEffect(
     useCallback(() => {
       const getUser = async () => {
-        const { data, error } = await GetRequest(`/profile`);
+        const result = await GetRequest(`/profile`);
 
-        if (!error) {
-          dispatch({ type: ACTIONS.USER, payload: data?.data });
-        } else {
+        if (!result.error) {
+          dispatch({ type: ACTIONS.USER, payload: result.data?.data });
+        } else if (shouldSignOut(result)) {
           await signOut(dispatch);
         }
+        // Any other failure is a transport problem: keep the cached user so the
+        // app still opens offline instead of ending the session.
       };
       getUser();
     }, [dispatch, state?.callback]),
@@ -296,14 +298,12 @@ const TabNavigator = ({
   useFocusEffect(
     useCallback(() => {
       const getOrgData = async () => {
-        const { data, error } = await GetRequest(
-          `/organisations/${state?.orgId}`,
-        );
+        const result = await GetRequest(`/organisations/${state?.orgId}`);
 
-        if (!error) {
-          dispatch({ type: ACTIONS.ORG_DATA, payload: data?.data });
+        if (!result.error) {
+          dispatch({ type: ACTIONS.ORG_DATA, payload: result.data?.data });
           syncRolesAndPermissionsFromApi();
-        } else {
+        } else if (shouldSignOut(result)) {
           await signOut(dispatch);
         }
       };
