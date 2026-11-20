@@ -3,6 +3,31 @@ import { GetRequest } from '@/utils/requests';
 import { useDataContext } from '@/store/useDataContext';
 import { ACTIONS } from '@/store/types';
 
+/**
+ * Reads the page counters from a dms response. The endpoint has been seen
+ * returning either an array with one entry or a plain object, and older builds
+ * compared `total_pages` while the rest of the app uses `total_pages_count`, so
+ * accept both before falling back to the page size.
+ */
+const readPagination = (response: any) => {
+  const pagination = Array.isArray(response?.pagination)
+    ? response.pagination[0]
+    : response?.pagination;
+
+  if (!pagination) return null;
+
+  const currentPage = Number(pagination.current_page ?? pagination.page);
+  const totalPages = Number(
+    pagination.total_pages ?? pagination.total_pages_count,
+  );
+
+  if (!Number.isFinite(currentPage) || !Number.isFinite(totalPages)) {
+    return null;
+  }
+
+  return { currentPage, totalPages };
+};
+
 export const useDMs = (
   orgId: string | null,
   search: string = '',
@@ -10,7 +35,6 @@ export const useDMs = (
 ) => {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
   const { state, dispatch } = useDataContext();
@@ -19,27 +43,34 @@ export const useDMs = (
   const dmsRef = useRef(dms);
   useEffect(() => {
     dmsRef.current = dms;
-  }, [dms, callback]);
+  }, [dms]);
 
   // Each request gets a number. Only the newest request's answer is used, so a
   // slow reply can't replace the list after a newer search or refresh.
   const latestRequestRef = useRef(0);
 
+  // onEndReached fires repeatedly while the list settles, so the next page and
+  // the in-flight flag live in refs: the guard cannot depend on a render.
+  const nextPageRef = useRef(2);
+  const hasMoreRef = useRef(true);
+  const loadMoreInFlight = useRef(false);
+
+  useEffect(() => {
+    hasMoreRef.current = hasMore;
+  }, [hasMore]);
+
   const fetchDMs = useCallback(
     async (isInitial: boolean = true, searchQuery: string = search) => {
       if (!orgId) return;
 
-      // if (isInitial) {
-      //     setLoading(true);
-      //     dispatch({ type: ACTIONS.DM_LOADING, payload: true });
-      // } else {
-      //     if (loadingMore || !hasMore) return;
-      //     setLoadingMore(true);
-      // }
-
       const requestId = ++latestRequestRef.current;
-      const currentPage = isInitial ? 1 : page;
+      const currentPage = isInitial ? 1 : nextPageRef.current;
       const url = `/organisations/${orgId}/dms?page=${currentPage}&limit=${limit}&search=${searchQuery}`;
+
+      if (isInitial && dmsRef.current.length === 0) {
+        setLoading(true);
+        dispatch({ type: ACTIONS.DM_LOADING, payload: true });
+      }
 
       const { data: response, error } = await GetRequest(url);
 
@@ -47,7 +78,7 @@ export const useDMs = (
 
       if (!error && response) {
         const newList = response.data || [];
-        const pagination = response.pagination?.[0];
+        const pagination = readPagination(response);
 
         let updatedList;
         if (isInitial) {
@@ -68,11 +99,13 @@ export const useDMs = (
         });
 
         if (pagination) {
-          setHasMore(pagination.current_page < pagination.total_pages);
-          setPage(pagination.current_page + 1);
+          const more = pagination.currentPage < pagination.totalPages;
+          setHasMore(more);
+          nextPageRef.current = pagination.currentPage + 1;
         } else {
-          setHasMore(newList.length === limit);
-          setPage(isInitial ? 2 : page + 1);
+          // No counters at all: a full page probably has a successor.
+          setHasMore(newList.length >= limit);
+          nextPageRef.current = currentPage + 1;
         }
       }
 
@@ -80,7 +113,7 @@ export const useDMs = (
       setLoadingMore(false);
       dispatch({ type: ACTIONS.DM_LOADING, payload: false });
     },
-    [orgId, page, hasMore, loadingMore, limit, dispatch, search],
+    [orgId, limit, dispatch, search],
   );
 
   useEffect(() => {
@@ -89,7 +122,6 @@ export const useDMs = (
 
     if (search) {
       setLoading(true);
-      // dispatch({ type: ACTIONS.DMS, payload: [] });
     }
 
     const delayDebounceFn = setTimeout(() => {
@@ -97,15 +129,20 @@ export const useDMs = (
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [search, orgId, callback]);
+  }, [search, orgId, callback, fetchDMs]);
 
   const refresh = () => fetchDMs(true);
 
   const loadMore = () => {
-    if (!loading && !loadingMore && hasMore && dms.length >= limit) {
-      fetchDMs(false);
-    }
+    if (loading || loadingMore || loadMoreInFlight.current) return;
+    if (!hasMoreRef.current) return;
+
+    loadMoreInFlight.current = true;
+    setLoadingMore(true);
+    fetchDMs(false).finally(() => {
+      loadMoreInFlight.current = false;
+    });
   };
 
-  return { loading, loadingMore, refresh, loadMore };
+  return { loading, loadingMore, hasMore, refresh, loadMore };
 };

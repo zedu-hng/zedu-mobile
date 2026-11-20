@@ -69,7 +69,12 @@ export const useChannels = (
 
       if (isInitial) {
         setLoading(true);
-        dispatch({ type: ACTIONS.CHANNEL_LOADING, payload: true });
+        // A realtime tick also refreshes this list. Only the first load, while
+        // the list is still empty, may show the skeleton; otherwise the whole
+        // list would flash on every new channel message.
+        if (channelsRef.current.length === 0) {
+          dispatch({ type: ACTIONS.CHANNEL_LOADING, payload: true });
+        }
       }
 
       const { data: response, error } = await GetRequest(url);

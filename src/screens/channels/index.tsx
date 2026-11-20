@@ -39,7 +39,7 @@ const ChannelHome = () => {
   const { user, orgData, orgId, channelLoading } = state;
   useShareZeduPrompt(user?.user_id || user?.id);
   const [search, setSearch] = useState('');
-  const { channels, loadingMore, refresh, loadMore } = useChannels(
+  const { channels, loading, loadingMore, refresh, loadMore } = useChannels(
     orgId,
     search,
   );
@@ -113,7 +113,7 @@ const ChannelHome = () => {
         </View>
       </View>
 
-      {channelLoading ? (
+      {channelLoading && channels.length === 0 ? (
         <ScrollView
           style={{
             paddingHorizontal: normalize(20),
@@ -244,7 +244,7 @@ const ChannelHome = () => {
               onEndReachedThreshold={0.1}
               refreshControl={
                 <ThemedRefreshControl
-                  refreshing={channelLoading && channels.length > 0}
+                  refreshing={loading && channels.length > 0}
                   onRefresh={refresh}
                 />
               }
