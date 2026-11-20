@@ -21,25 +21,51 @@ apiClient.interceptors.request.use(
   },
 );
 
+export interface RequestResult<T> {
+  data: T | null;
+  error: string | null;
+  status?: number;
+  /** The session itself was rejected (401), so the user is no longer signed in. */
+  unauthorized?: boolean;
+  /** The request never reached the server: offline, DNS or timeout. */
+  isNetworkError?: boolean;
+}
+
+/**
+ * Tells an auth failure apart from a transport failure. Callers need this to
+ * avoid signing a user out when the phone is simply offline.
+ */
+export const classifyRequestError = (error: any) => {
+  const status: number | undefined =
+    error?.response?.status ?? error?.response?.data?.status_code;
+
+  return {
+    status,
+    unauthorized: status === 401,
+    isNetworkError:
+      !error?.response &&
+      (error?.code === 'ERR_NETWORK' ||
+        error?.code === 'ECONNABORTED' ||
+        error?.message === 'Network Error'),
+  };
+};
+
 export const request = async <T = any>(
   config: AxiosRequestConfig,
-): Promise<{ data: T | null; error: string | null }> => {
+): Promise<RequestResult<T>> => {
   try {
     const response: AxiosResponse<T> = await apiClient(config);
-    return { data: response.data, error: null };
+    return { data: response.data, error: null, status: response.status };
   } catch (error: any) {
     const message =
       error.response?.data?.message || error.message || 'An error occurred';
+    const failure = classifyRequestError(error);
 
-    if (
-      error.response?.status === 401 ||
-      error.response?.data?.status_code === 401
-    ) {
+    if (failure.unauthorized) {
       await clearAllData();
-      // Logic for logout or redirect goes here
     }
 
-    return { data: null, error: message };
+    return { data: null, error: message, ...failure };
   }
 };
 
