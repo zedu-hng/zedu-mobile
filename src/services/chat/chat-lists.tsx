@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { GetRequest } from '@/utils/requests';
 import { useDataContext } from '@/store/useDataContext';
 import { ACTIONS } from '@/store/types';
+import { readCachedList, writeCachedList } from '@/services/lists/list-cache';
 
 export const useDMs = (
   orgId: string | null,
@@ -41,7 +42,22 @@ export const useDMs = (
       const currentPage = isInitial ? 1 : page;
       const url = `/organisations/${orgId}/dms?page=${currentPage}&limit=${limit}&search=${searchQuery}`;
 
-      const { data: response, error } = await GetRequest(url);
+      // Start the network call, then paint the cached first page while it is
+      // in flight: the Chats tab is the first screen after launch.
+      const network = GetRequest(url);
+      const canHydrate = isInitial && !searchQuery;
+
+      if (canHydrate) {
+        const cached = await readCachedList(orgId, 'dms');
+        if (requestId !== latestRequestRef.current) return;
+        if (cached.length && dmsRef.current.length === 0) {
+          dispatch({ type: ACTIONS.DMS, payload: cached });
+          setLoading(false);
+          dispatch({ type: ACTIONS.DM_LOADING, payload: false });
+        }
+      }
+
+      const { data: response, error } = await network;
 
       if (requestId !== latestRequestRef.current) return;
 
@@ -66,6 +82,10 @@ export const useDMs = (
           type: ACTIONS.DMS,
           payload: updatedList,
         });
+
+        if (canHydrate) {
+          writeCachedList(orgId, 'dms', updatedList);
+        }
 
         if (pagination) {
           setHasMore(pagination.current_page < pagination.total_pages);

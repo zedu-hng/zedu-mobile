@@ -81,6 +81,10 @@ import { ACTIONS } from '@/store/types';
 import { useDataContext } from '@/store/useDataContext';
 import { GetRequest } from '@/utils/requests';
 import { useFocusEffect } from '@react-navigation/native';
+import {
+  readCachedMessages,
+  writeCachedMessages,
+} from '@/services/messages/message-cache';
 
 interface Props {
   channel_id: string;
@@ -92,14 +96,34 @@ const UseChatDetails = ({ channel_id }: Props) => {
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const isFocusedRef = useRef(false);
+  // A slower response for the conversation the user just left must not paint
+  // over the one on screen.
+  const requestRef = useRef(0);
   // The conversation whose first page has loaded, so screens can tell when
   // dmsChat belongs to this channel rather than the previous one.
   const [loadedChannelId, setLoadedChannelId] = useState<string | null>(null);
 
   const fetchPage1 = useCallback(async () => {
+    const requestId = requestRef.current + 1;
+    requestRef.current = requestId;
+    const cacheKey = `dm:${channel_id}`;
+
+    // Paint the cached page first, so reopening a conversation is instant.
+    const cached = await readCachedMessages(cacheKey);
+    if (requestId !== requestRef.current) return;
+    if (cached.length) {
+      dispatch({
+        type: ACTIONS.DMS_CHAT,
+        payload: { data: cached, page: 1 },
+      });
+      setLoadedChannelId(channel_id);
+    }
+
     const { data, error } = await GetRequest(
       `/dms/channels/${channel_id}/threads?page=1&limit=50`,
     );
+    if (requestId !== requestRef.current) return;
+
     if (!error && data?.data) {
       dispatch({
         type: ACTIONS.DMS_CHAT,
@@ -109,6 +133,7 @@ const UseChatDetails = ({ channel_id }: Props) => {
         },
       });
       setPage(1);
+      writeCachedMessages(cacheKey, data.data);
       const paginationDetails = data.pagination?.[0];
       if (paginationDetails?.total_pages_count) {
         setHasMore(paginationDetails.total_pages_count > 1);

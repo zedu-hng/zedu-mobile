@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { GetRequest } from '@/utils/requests';
 import { useDataContext } from '@/store/useDataContext';
 import { ACTIONS } from '@/store/types';
+import { readCachedList, writeCachedList } from '@/services/lists/list-cache';
 
 export const useChannels = (
   orgId: string | null,
@@ -41,7 +42,22 @@ export const useChannels = (
       const currentPage = isInitial ? 1 : page;
       const url = `/organisations/${orgId}/user-channels?page=${currentPage}&limit=${limit}&search=${searchQuery}`;
 
-      const { data: response, error } = await GetRequest(url);
+      // Start the network call, then paint the cached first page while it is
+      // in flight, so Channels opens with content instead of skeletons.
+      const network = GetRequest(url);
+      const canHydrate = isInitial && !searchQuery;
+
+      if (canHydrate) {
+        const cached = await readCachedList(orgId, 'channels');
+        if (generation !== requestGeneration.current) return;
+        if (cached.length && channelsRef.current.length === 0) {
+          dispatch({ type: ACTIONS.USER_CHANNELS, payload: cached });
+          dispatch({ type: ACTIONS.CHANNEL_LOADING, payload: false });
+          setLoading(false);
+        }
+      }
+
+      const { data: response, error } = await network;
 
       if (generation !== requestGeneration.current) {
         return;
@@ -68,6 +84,10 @@ export const useChannels = (
           type: ACTIONS.USER_CHANNELS,
           payload: updatedList,
         });
+
+        if (canHydrate) {
+          writeCachedList(orgId, 'channels', updatedList);
+        }
 
         if (pagination) {
           setHasMore(pagination.current_page < pagination.total_pages);
