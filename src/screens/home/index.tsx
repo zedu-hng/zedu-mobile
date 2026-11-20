@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Image,
@@ -43,7 +43,10 @@ const HomeScreen = () => {
   const [activeCategory, setActiveCategory] = useState('All');
   const [search, setSearch] = useState('');
   const [_chatLoading, setChatLoading] = useState(false);
-  const { loading, loadingMore, refresh, loadMore } = useDMs(orgId, search);
+  const { loading, loadingMore, hasMore, refresh, loadMore } = useDMs(
+    orgId,
+    search,
+  );
 
   const totalUnreadCount =
     dms?.filter((i: Chat) => i.thread_count > 0).length || 0;
@@ -70,6 +73,23 @@ const HomeScreen = () => {
         return dms;
     }
   }, [dms, activeCategory]);
+
+  // Groups are a tab of this list, not a separate endpoint, so the filtered
+  // list can be shorter than the screen and `onEndReached` never fires. Keep
+  // paging on the server until the tab has enough rows or the list runs out.
+  useEffect(() => {
+    if (activeCategory !== 'Groups') return;
+    if (loading || loadingMore || !hasMore) return;
+    if (filteredDms.length >= 10) return;
+    loadMore();
+  }, [
+    activeCategory,
+    filteredDms.length,
+    hasMore,
+    loading,
+    loadingMore,
+    loadMore,
+  ]);
 
   const handleNavigate = (props: Chat) => {
     if (props?.channel_type === 'dm') {
