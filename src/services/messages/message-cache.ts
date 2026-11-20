@@ -77,7 +77,10 @@ export const writeCachedMessages = async (
   const savedAt = Date.now();
 
   try {
-    await AsyncStorage.setItem(key, JSON.stringify({ savedAt, messages: unique }));
+    await AsyncStorage.setItem(
+      key,
+      JSON.stringify({ savedAt, messages: unique }),
+    );
 
     const index = (await readIndex()).filter(entry => entry.key !== key);
     index.unshift({ key, savedAt });
