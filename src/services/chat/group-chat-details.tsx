@@ -18,15 +18,21 @@ const UseGroupChatDetails = ({ channel_id }: Props) => {
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const isFocusedRef = useRef(false);
+  // A slower response for the conversation the user just left must not paint
+  // over the one on screen.
+  const requestRef = useRef(0);
   // The conversation whose first page has loaded, so screens can tell when
   // dmsChat belongs to this channel rather than the previous one.
   const [loadedChannelId, setLoadedChannelId] = useState<string | null>(null);
 
   const fetchFirstPage = useCallback(async () => {
+    const requestId = requestRef.current + 1;
+    requestRef.current = requestId;
     const cacheKey = `group-dm:${channel_id}`;
 
     // Paint the cached page first, so reopening a conversation is instant.
     const cached = await readCachedMessages(cacheKey);
+    if (requestId !== requestRef.current) return;
     if (cached.length) {
       dispatch({
         type: ACTIONS.DMS_CHAT,
@@ -38,6 +44,7 @@ const UseGroupChatDetails = ({ channel_id }: Props) => {
     const { data } = await GetRequest(
       `/group-dms/channels/${channel_id}/threads?page=1&limit=50`,
     );
+    if (requestId !== requestRef.current) return;
     if (data) {
       dispatch({
         type: ACTIONS.DMS_CHAT,
