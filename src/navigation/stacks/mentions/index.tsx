@@ -9,6 +9,7 @@ export type MentionStackParamList = {
     thread_id: string;
     channel_id: string;
     mention: any;
+    highlight_message_id?: string;
   };
 };
 

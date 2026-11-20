@@ -112,7 +112,7 @@ const UseReplyChat = ({ channel_id, thread_id }: Props) => {
     state?.replyChat,
   ]);
 
-  return { loadMore, isFetchingMore };
+  return { loadMore, isFetchingMore, hasMore };
 };
 
 export default UseReplyChat;

@@ -131,7 +131,7 @@ const MentionThreadScreen = ({ navigation, route }: any) => {
     setMentionState(null);
   };
 
-  const { loadMore, isFetchingMore } = UseReplyChat({
+  const { loadMore, isFetchingMore, hasMore } = UseReplyChat({
     channel_id: channel_id as string,
     thread_id: thread_id,
   });
@@ -140,35 +140,59 @@ const MentionThreadScreen = ({ navigation, route }: any) => {
 
   const [isVoiceUploading, setIsVoiceUploading] = useState(false);
 
-  // Called immediately when the user stops recording — uploads in background
-  const handleScrollToIndexFailed = useMemo(
-    () => createScrollToIndexFailedHandler(flatListRef),
+  // The highlight timer lives in a ref, so a new page arriving inside the
+  // 2.5 s window cannot clear it and leave the message lit forever.
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [highlightNotFound, setHighlightNotFound] = useState(false);
+  const lastJumpRequestLength = useRef(-1);
+
+  useEffect(
+    () => () => {
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    },
     [],
   );
 
   // Opening a reply from search, a mention or a notification passes the reply
   // id: scroll to it and highlight it, the same way the channel thread does.
+  // The reply may sit on an older page, so keep loading until it appears.
   useEffect(() => {
-    if (
-      !highlight_message_id ||
-      hasScrolledToHighlight.current ||
-      !replyChat?.length
-    ) {
-      return;
-    }
+    if (!highlight_message_id || hasScrolledToHighlight.current) return;
+    if (!replyChat?.length) return;
 
     const index = replyChat.findIndex(
       (msg: any) =>
         String(msg.id ?? msg.message_id) === String(highlight_message_id),
     );
-    if (index < 0) return;
+
+    if (index < 0) {
+      if (hasMore) {
+        if (lastJumpRequestLength.current !== replyChat.length) {
+          lastJumpRequestLength.current = replyChat.length;
+          loadMore();
+        }
+        return;
+      }
+      setHighlightNotFound(true);
+      return;
+    }
 
     hasScrolledToHighlight.current = true;
+    setHighlightNotFound(false);
     setHighlightMsgId(String(highlight_message_id));
     scrollChatToIndex(flatListRef, index, replyChat);
-    const timer = setTimeout(() => setHighlightMsgId(null), 2500);
-    return () => clearTimeout(timer);
-  }, [highlight_message_id, replyChat]);
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    highlightTimerRef.current = setTimeout(() => {
+      highlightTimerRef.current = null;
+      setHighlightMsgId(null);
+    }, 2500);
+  }, [highlight_message_id, replyChat, hasMore, loadMore]);
+
+  // Called immediately when the user stops recording — uploads in background
+  const handleScrollToIndexFailed = useMemo(
+    () => createScrollToIndexFailedHandler(flatListRef),
+    [],
+  );
 
   const handleVoiceRecorded = async (uri: string) => {
     setIsVoiceUploading(true);
@@ -348,6 +372,19 @@ const MentionThreadScreen = ({ navigation, route }: any) => {
       </View>
 
       <ChatBackground />
+
+      {highlightNotFound && (
+        <AppText
+          size={12}
+          style={{
+            textAlign: 'center',
+            color: colors.textMuted,
+            marginTop: 8,
+          }}
+        >
+          That message is no longer in this thread
+        </AppText>
+      )}
 
       <FlatList
         ref={flatListRef}

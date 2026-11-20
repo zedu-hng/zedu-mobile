@@ -59,12 +59,18 @@ const MentionsScreen = () => {
       },
     });
 
+    // The reply that carries the mention is the newest one in the preview;
+    // opening the thread should land on it rather than the top of the thread.
+    const mentionMessage =
+      threadMsg.messages?.[threadMsg.messages.length - 1] ?? null;
+
     navigation.navigate('MentionStack', {
       screen: 'MentionThread',
       params: {
         thread_id: threadMsg.thread_id,
         channel_id: threadMsg.channels_id,
         mention: threadMsg,
+        highlight_message_id: mentionMessage?.id ?? undefined,
       },
     });
 
