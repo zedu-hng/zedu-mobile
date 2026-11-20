@@ -26,6 +26,7 @@ export type ChatStackParamList = {
     restore_dms_chat?: any[];
     fromNotification?: boolean;
     unread_count?: number;
+    highlight_message_id?: string;
   };
   CallScreen: undefined;
   GroupChatDetails: {
@@ -33,6 +34,7 @@ export type ChatStackParamList = {
     channel_id: string;
     fromNotification?: boolean;
     unread_count?: number;
+    highlight_message_id?: string;
   };
   GroupCallScreen: undefined;
   GroupAddMembersScreen: undefined;

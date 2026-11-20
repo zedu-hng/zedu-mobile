@@ -134,7 +134,8 @@ const ChatDetailScreen = ({ navigation }: any) => {
   } = state;
   dmsChatRef.current = dmsChat || [];
   const route = useRoute<RouteProp<ChatStackParamList, 'ChatDetails'>>();
-  const { channel_id, fromNotification, unread_count } = route.params ?? {};
+  const { channel_id, fromNotification, unread_count, highlight_message_id } =
+    route.params ?? {};
   const participants = Array.isArray(participant) ? participant : [];
   const headerParticipant =
     participants.find(p => p.user_id !== user?.user_id) || participants[0];
@@ -709,14 +710,15 @@ const ChatDetailScreen = ({ navigation }: any) => {
     cancelPinnedScrollJumps();
   }, []);
 
-  const handleSearchSelect = useCallback(
-    async (hit: ChannelSearchHit) => {
-      const jumpId = String(hit.messageId || '');
+  // Jump to a message by id. Search uses it, and so does the
+  // highlight_message_id param when a mention, link or notification opens
+  // this conversation at a specific message.
+  const jumpToMessage = useCallback(
+    async (
+      jumpId: string,
+      preview?: { message?: string; timestamp?: string | number },
+    ) => {
       if (!jumpId) return;
-
-      Keyboard.dismiss();
-      setIsSearching(false);
-      setSearchQuery('');
 
       cancelPinnedScrollJumps();
       pinJumpLockRef.current = false;
@@ -729,8 +731,8 @@ const ChatDetailScreen = ({ navigation }: any) => {
         if (idx < 0) {
           idx = findMessageIndexByPreview(
             dmsChatRef.current,
-            hit.message,
-            hit.timestamp,
+            preview?.message ?? '',
+            preview?.timestamp as string | undefined,
           );
         }
         return idx;
@@ -788,6 +790,31 @@ const ChatDetailScreen = ({ navigation }: any) => {
     },
     [channel_id, dispatch],
   );
+
+  const handleSearchSelect = useCallback(
+    (hit: ChannelSearchHit) => {
+      Keyboard.dismiss();
+      setIsSearching(false);
+      setSearchQuery('');
+
+      jumpToMessage(String(hit.messageId || ''), {
+        message: hit.message,
+        timestamp: hit.timestamp,
+      });
+    },
+    [jumpToMessage],
+  );
+
+  // Deep links (mention, link, notification) carry the message to open.
+  const routeJumpHandled = useRef<string | null>(null);
+  useEffect(() => {
+    if (!highlight_message_id || isInitialLoading) return;
+    const jumpId = String(highlight_message_id);
+    if (routeJumpHandled.current === jumpId) return;
+
+    routeJumpHandled.current = jumpId;
+    jumpToMessage(jumpId);
+  }, [highlight_message_id, isInitialLoading, jumpToMessage]);
 
   const handleScrollToIndexFailed = useMemo(
     () => createScrollToIndexFailedHandler(flatListRef),

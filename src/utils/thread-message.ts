@@ -28,6 +28,28 @@ export function getThreadMessageSendUrl(
   }
 }
 
+const THREAD_REPLIES_COLLECTION: Record<ThreadChatType, string> = {
+  dm: 'dms/thread',
+  group_dm: 'group-dms/thread',
+  channel: 'threads',
+};
+
+/**
+ * One builder for both the first page and later pages of a thread's replies.
+ * Page 1 and load-more used to disagree about the thread id, so every reply
+ * after the first page was fetched for the wrong collection.
+ */
+export function getThreadRepliesUrl(
+  chatType: ThreadChatType,
+  channelId: string,
+  threadId: string,
+  page: number,
+  limit: number = 50,
+): string {
+  const collection = THREAD_REPLIES_COLLECTION[chatType];
+  return `/${collection}/${threadId}/channels/${channelId}?page=${page}&limit=${limit}`;
+}
+
 export function getThreadMessageCallbackAction(chatType: ThreadChatType) {
   return chatType === 'channel' ? ACTIONS.CHANNEL_CALLBACK : ACTIONS.CALLBACK;
 }

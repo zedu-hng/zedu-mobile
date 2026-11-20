@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { ACTIONS } from '@/store/types';
 import { useDataContext } from '@/store/useDataContext';
 import { GetRequest } from '@/utils/requests';
+import { getThreadRepliesUrl } from '@/utils/thread-message';
 
 interface Props {
   channel_id: string;
@@ -18,7 +19,7 @@ const UseGroupReplyChat = ({ channel_id, thread_id }: Props) => {
 
   const getChat = useCallback(async () => {
     const { data, error } = await GetRequest(
-      `/group-dms/thread/${thread_id}/channels/${channel_id}?page=1&limit=50`,
+      getThreadRepliesUrl('group_dm', channel_id, thread_id, 1),
     );
 
     if (!error && data?.data) {
@@ -33,7 +34,7 @@ const UseGroupReplyChat = ({ channel_id, thread_id }: Props) => {
       // If we got less than the limit, there's no more to fetch
       if (data.data.length < 50) setHasMore(false);
     }
-  }, [channel_id, dispatch]);
+  }, [channel_id, thread_id, dispatch]);
 
   useEffect(() => {
     if (!initialFetched.current) {
@@ -52,7 +53,7 @@ const UseGroupReplyChat = ({ channel_id, thread_id }: Props) => {
 
     try {
       const { data, error } = await GetRequest(
-        `/group-dms/thread/channels/${channel_id}?page=${nextPage}&limit=50`,
+        getThreadRepliesUrl('group_dm', channel_id, thread_id, nextPage),
       );
 
       if (!error && data?.data && data.data.length > 0) {
