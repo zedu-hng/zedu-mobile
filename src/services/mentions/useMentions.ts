@@ -4,6 +4,7 @@ import { useDataContext } from '@/store/useDataContext';
 import { ACTIONS } from '@/store/types';
 import { ThreadListItem } from '@/types/thread';
 import { parseOrganisationThreadsResponse } from './parse-organisation-threads';
+import { mergeThreads, sortThreadsByLatest } from './sort-threads';
 
 export type MentionApiItem = ThreadListItem;
 
@@ -45,9 +46,10 @@ export const useMentions = (orgId: string | null, limit: number = 20) => {
             parseOrganisationThreadsResponse(data);
           const pagination = data.pagination?.[0] || data.pagination;
 
+          // Newest activity first, on the first page and after each next page.
           let updatedList: ThreadListItem[];
           if (isInitial) {
-            updatedList = newList;
+            updatedList = sortThreadsByLatest(newList);
           } else {
             const existingIds = new Set(
               mentionsRef.current.map(item => item.thread_id),
@@ -55,7 +57,7 @@ export const useMentions = (orgId: string | null, limit: number = 20) => {
             const uniqueNewItems = newList.filter(
               item => !existingIds.has(item.thread_id),
             );
-            updatedList = [...mentionsRef.current, ...uniqueNewItems];
+            updatedList = mergeThreads(mentionsRef.current, uniqueNewItems);
           }
 
           dispatch({
