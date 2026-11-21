@@ -11,6 +11,7 @@ import {
 import { isAcceptingDirectCall } from '@/services/incoming-direct-call.handler';
 import { ShowNotify } from '@/components/ui/toast';
 import { parseOrganisationThreadsResponse } from '@/services/mentions/parse-organisation-threads';
+import { prependActiveThreads } from '@/services/mentions/sort-threads';
 import {
   extractGroupParticipants,
   extractLeftParticipantUserId,
@@ -32,6 +33,11 @@ export default function GeneralNotificationConnection() {
   useEffect(() => {
     participantsRef.current = state?.buzzParticipants || [];
   }, [state?.buzzParticipants]);
+
+  const mentionsRef = useRef(state?.mentionsList || []);
+  useEffect(() => {
+    mentionsRef.current = state?.mentionsList || [];
+  }, [state?.mentionsList]);
 
   const getConnectionToken = async () => {
     try {
@@ -194,23 +200,14 @@ export default function GeneralNotificationConnection() {
         });
 
         if (incomingThreads.length > 0) {
-          const existingMentions = [...(state.mentionsList || [])];
-
-          incomingThreads.forEach(newMention => {
-            const existingIndex = existingMentions.findIndex(
-              item => item.thread_id === newMention.thread_id,
-            );
-
-            if (existingIndex !== -1) {
-              existingMentions.splice(existingIndex, 1);
-            }
-
-            existingMentions.unshift(newMention);
-          });
-
+          // Read the current list through the ref: this handler is created once
+          // per connection, so `state` here is the list from when it connected.
           dispatch({
             type: ACTIONS.MENTIONS_LIST,
-            payload: existingMentions,
+            payload: prependActiveThreads(
+              mentionsRef.current || [],
+              incomingThreads,
+            ),
           });
         }
       }
