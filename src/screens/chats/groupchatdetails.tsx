@@ -692,13 +692,9 @@ const GroupChatDetailScreen = ({ navigation, route }: any) => {
       };
 
       if (!found) {
-        setTimeout(() => {
-          if (pendingJumpIdRef.current === jumpId) {
-            pendingJumpIdRef.current = null;
-            setHighlightMsgId(null);
-            ShowNotify('Error', 'Could not find that message');
-          }
-        }, 2500);
+        pendingJumpIdRef.current = null;
+        setHighlightMsgId(null);
+        ShowNotify('Info', "Couldn't find that message");
         return;
       }
 

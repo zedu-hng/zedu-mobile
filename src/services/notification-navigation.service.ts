@@ -9,6 +9,8 @@ export interface MessageNotificationPayload {
   channel_id: string;
   participant_id?: string;
   thread_id?: string;
+  message_id?: string;
+  is_thread_reply?: boolean;
 }
 
 export interface OpenChatFromNotificationDeps {
@@ -25,6 +27,7 @@ const MESSAGE_NOTIFICATION_TYPES = new Set<MessageNotificationType>([
   'dm',
   'group_dm',
   'channel',
+  'thread',
 ]);
 
 const parseJsonSafely = (value: unknown) => {
@@ -67,12 +70,32 @@ export function parseMessageNotificationPayload(
   const channelId = data.channel_id || data.channels_id;
   if (!channelId) return null;
 
-  return {
+  const rawMessageId = data.message_id || data.id || data.msg_id;
+  const messageId = rawMessageId ? String(rawMessageId) : undefined;
+  const rawThreadId = data.thread_id || data.threadId;
+  const threadId = rawThreadId ? String(rawThreadId) : undefined;
+
+  const isThreadReply = Boolean(
+    notificationType === 'thread' ||
+      data.section === 'reply' ||
+      data.section === 'reply_dm' ||
+      data.is_thread_reply === true ||
+      data.is_reply === true ||
+      (threadId && messageId && threadId !== messageId),
+  );
+
+  const parsed: MessageNotificationPayload = {
     notification_type: notificationType,
     channel_id: String(channelId),
     participant_id: data.participant_id || data.sender_id || undefined,
-    thread_id: data.thread_id ? String(data.thread_id) : undefined,
+    thread_id: threadId,
+    message_id: messageId,
+    is_thread_reply: isThreadReply,
   };
+
+  console.log('[NotificationNavigation] Parsed push payload:', parsed);
+
+  return parsed;
 }
 
 export function queueMessageNotificationClick(
@@ -112,6 +135,92 @@ export async function openChatFromNotification(
 ): Promise<boolean> {
   const { dispatch, dms, userChannels, callback, channelCallback } = deps;
 
+  // Handle thread replies
+  if (payload.is_thread_reply && payload.thread_id) {
+    const highlightId = payload.message_id || payload.thread_id;
+
+    if (payload.notification_type === 'dm') {
+      navigate('ChatStack', {
+        screen: 'ChatThreadScreen',
+        params: {
+          channel_id: payload.channel_id,
+          thread_id: payload.thread_id,
+          chatType: 'dm',
+          highlight_message_id: highlightId,
+        },
+      });
+      dispatch({ type: ACTIONS.CALLBACK, payload: !callback });
+      return true;
+    }
+
+    if (payload.notification_type === 'group_dm') {
+      navigate('ChatStack', {
+        screen: 'GroupChatThreadScreen',
+        params: {
+          channel_id: payload.channel_id,
+          thread_id: payload.thread_id,
+          highlight_message_id: highlightId,
+        },
+      });
+      dispatch({ type: ACTIONS.CALLBACK, payload: !callback });
+      return true;
+    }
+
+    if (payload.notification_type === 'thread') {
+      const chat = (dms || []).find(
+        (d: any) => d.channel_id === payload.channel_id,
+      );
+      if (chat?.channel_type === 'group_dm') {
+        navigate('ChatStack', {
+          screen: 'GroupChatThreadScreen',
+          params: {
+            channel_id: payload.channel_id,
+            thread_id: payload.thread_id,
+            highlight_message_id: highlightId,
+          },
+        });
+        dispatch({ type: ACTIONS.CALLBACK, payload: !callback });
+        return true;
+      }
+      if (chat?.channel_type === 'dm') {
+        navigate('ChatStack', {
+          screen: 'ChatThreadScreen',
+          params: {
+            channel_id: payload.channel_id,
+            thread_id: payload.thread_id,
+            chatType: 'dm',
+            highlight_message_id: highlightId,
+          },
+        });
+        dispatch({ type: ACTIONS.CALLBACK, payload: !callback });
+        return true;
+      }
+
+      navigate('ChannelStack', {
+        screen: 'ChannelThread',
+        params: {
+          channel_id: payload.channel_id,
+          thread_id: payload.thread_id,
+          highlight_message_id: highlightId,
+        },
+      });
+      dispatch({ type: ACTIONS.CHANNEL_CALLBACK, payload: !channelCallback });
+      return true;
+    }
+
+    navigate('ChannelStack', {
+      screen: 'ChannelThread',
+      params: {
+        channel_id: payload.channel_id,
+        thread_id: payload.thread_id,
+        highlight_message_id: highlightId,
+      },
+    });
+    dispatch({ type: ACTIONS.CHANNEL_CALLBACK, payload: !channelCallback });
+    return true;
+  }
+
+  // Handle top-level messages
   if (payload.notification_type === 'dm') {
     const chat = (dms || []).find(
       (d: any) =>
@@ -132,6 +241,9 @@ export async function openChatFromNotification(
         channel_id: payload.channel_id,
         participant_id: payload.participant_id || chat?.participant_id,
         fromNotification: true,
+        ...(payload.message_id
+          ? { highlight_message_id: payload.message_id }
+          : {}),
       },
     });
 
@@ -165,6 +277,9 @@ export async function openChatFromNotification(
       params: {
         channel_id: payload.channel_id,
         fromNotification: true,
+        ...(payload.message_id
+          ? { highlight_message_id: payload.message_id }
+          : {}),
       },
     });
 
