@@ -524,7 +524,7 @@ const ChannelThreadScreen = ({ navigation, route }: any) => {
           message={message}
           setMessage={setMessage}
           onTypingChange={handleTyping}
-          onSend={(content: any) => handleSendMessage(content)}
+          onSend={(content: any) => handleSendMessage(content, media)}
           onVoiceRecorded={handleVoiceRecorded}
           onVoiceSendReady={handleVoiceSendReady}
           onVoiceCancel={handleVoiceCancel}

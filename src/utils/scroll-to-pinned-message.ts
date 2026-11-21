@@ -297,7 +297,7 @@ export async function ensureThreadIdLoaded({
   const tryFetch = async (preferGroup: boolean) => {
     const startPage = Math.max(2, Math.floor(list.length / 50) + 1);
 
-    for (let page = startPage; page <= startPage + 7; page += 1) {
+    for (let page = startPage; page <= startPage + 30; page += 1) {
       const { data, error } = await GetRequest(
         threadsUrlForPage(scope, channelId, page, preferGroup),
       );
