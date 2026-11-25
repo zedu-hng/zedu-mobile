@@ -279,6 +279,17 @@ export function createMentionListStyles(colors: ThemeColors) {
       color: colors.messageMeta,
       flex: 1,
     },
+    countBadge: {
+      backgroundColor: colors.primary,
+      minWidth: normalize(20),
+      height: normalize(20),
+      borderRadius: normalize(10),
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: normalize(4),
+      marginLeft: normalize(8),
+    },
+    countText: { color: colors.white },
     listContent: {
       flexGrow: 1,
     },
