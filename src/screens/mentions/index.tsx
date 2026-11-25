@@ -25,6 +25,15 @@ import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5';
 import { ACTIONS } from '@/store/types';
 import ChatSkeleton from '@/components/skeleton/chat-skeleton';
 import { UserAvatar } from '../channels/user-avatar';
+import {
+  capThreadSeen,
+  markThreadSeen,
+  readThreadSeen,
+  saveThreadSeen,
+  seedThreadSeen,
+  threadUnreadReplies,
+  ThreadSeenMap,
+} from '@/utils/thread-unread';
 
 type MentionNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -45,9 +54,52 @@ const MentionsScreen = () => {
     onRefresh,
   } = useMentions(orgId);
 
+  // Replies shown the last time each thread was opened, so a row can show how
+  // many are new. The endpoint only returns one total for the organisation.
+  const [seenThreads, setSeenThreads] = React.useState<ThreadSeenMap | null>(
+    null,
+  );
+
+  React.useEffect(() => {
+    let active = true;
+    if (!orgId) {
+      setSeenThreads(null);
+      return;
+    }
+
+    readThreadSeen(orgId).then(stored => {
+      if (active) setSeenThreads(stored ?? {});
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [orgId]);
+
+  // Threads this device has never opened start read.
+  React.useEffect(() => {
+    if (!orgId || !seenThreads || mentionList.length === 0) return;
+
+    const { map, changed } = seedThreadSeen(seenThreads, mentionList);
+    if (!changed) return;
+
+    const capped = capThreadSeen(map, mentionList);
+    setSeenThreads(capped);
+    saveThreadSeen(orgId, capped);
+  }, [orgId, seenThreads, mentionList]);
+
+  const markOpened = (mention: MentionApiItem) => {
+    if (!orgId) return;
+    const map = markThreadSeen(seenThreads ?? {}, mention);
+    setSeenThreads(map);
+    saveThreadSeen(orgId, map);
+  };
+
   const handleMentionPress = (mention: MentionApiItem) => {
     const threadMsg = mention.thread_messages?.[0];
     if (!threadMsg) return;
+
+    markOpened(mention);
 
     dispatch({ type: ACTIONS.SELECTED_MSG, payload: threadMsg });
 
@@ -78,11 +130,19 @@ const MentionsScreen = () => {
     const showLock = channelType === 'private';
     const lastMessage = item.thread_messages?.[0];
     const showAvatar = isDM || isGroupDM;
+    const unread = threadUnreadReplies(seenThreads, item);
 
     return (
       <TouchableOpacity
         style={styles.chatItem}
         onPress={() => handleMentionPress(item)}
+        accessibilityLabel={
+          unread > 0
+            ? `${item.channel_name}, ${unread} unread ${
+                unread === 1 ? 'reply' : 'replies'
+              }`
+            : item.channel_name
+        }
       >
         <View style={styles.avatarWrapper}>
           {showAvatar ? (
@@ -124,9 +184,13 @@ const MentionsScreen = () => {
                 ? formatPreviewMessage(item.previe_message)
                 : ''}
             </AppText>
-            {/* {lastMessage?.message_count > 0 && (
-                            <View style={styles.countBadge} />
-                        )} */}
+            {unread > 0 && (
+              <View style={styles.countBadge}>
+                <AppText variant="bold" size={11} style={styles.countText}>
+                  {unread > 99 ? '99+' : String(unread)}
+                </AppText>
+              </View>
+            )}
           </View>
         </View>
       </TouchableOpacity>
