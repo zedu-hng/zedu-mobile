@@ -17,6 +17,8 @@ import { PostRequest } from '@/utils/requests';
 import { ACTIONS } from '@/store/types';
 import Container from '@/components/layout/container';
 import { ExitGroupSheet } from '@/components/layout/group-chat/exit-group';
+import { DeleteGroupSheet } from '@/components/layout/group-chat/delete-group';
+import { isGroupCreator } from '@/utils/group-creator';
 import BuzzService from '@/services/buzz.service';
 import { ShowNotify } from '@/components/ui/toast';
 import { MemberSearchInput } from '@/components/layout/chat/member-search-input';
@@ -66,12 +68,21 @@ const GroupDetailsScreen = ({ navigation, route }: any) => {
   const styles = useMemo(() => createGroupInfoStyles(colors), [colors]);
   const actionSheetRef = useRef<any>(null);
   const exitSheetRef = useRef<any>(null);
+  const deleteSheetRef = useRef<any>(null);
   const [callLoading, setCallLoading] = useState(false);
   const [memberSearchOpen, setMemberSearchOpen] = useState(false);
   const [memberSearchQuery, setMemberSearchQuery] = useState('');
   const { state, dispatch } = useDataContext();
   const { user, groupDetails, orgId, groupCallback } = state;
   const { channel_id } = route.params;
+
+  // Only the group's creator can delete the conversation for everyone.
+  const isCreator = useMemo(
+    () => isGroupCreator(groupDetails?.participants, user?.user_id),
+    [groupDetails?.participants, user?.user_id],
+  );
+  const groupName =
+    groupDetails?.participants?.map(p => p.username).join(', ') || 'this group';
 
   const sortedParticipants = useMemo(() => {
     return (groupDetails?.participants || [])
@@ -557,6 +568,14 @@ const GroupDetailsScreen = ({ navigation, route }: any) => {
           color={groupDetails?.is_favourite ? colors.error : colors.primary}
           onPress={favorites}
         />
+        {isCreator && (
+          <ActionItem
+            icon="trash-outline"
+            label="Delete group"
+            color={colors.error}
+            onPress={() => deleteSheetRef.current?.expand()}
+          />
+        )}
         <ActionItem
           icon="log-out-outline"
           label="Exit group"
@@ -577,10 +596,17 @@ const GroupDetailsScreen = ({ navigation, route }: any) => {
         ref={exitSheetRef}
         onClose={() => exitSheetRef.current?.close()}
         channel_id={channel_id}
-        groupName={
-          groupDetails?.participants?.map(p => p.username).join(', ') || 'this'
-        }
+        groupName={groupName}
       />
+
+      {isCreator && (
+        <DeleteGroupSheet
+          ref={deleteSheetRef}
+          onClose={() => deleteSheetRef.current?.close()}
+          channel_id={channel_id}
+          groupName={groupName}
+        />
+      )}
     </Container>
   );
 };
